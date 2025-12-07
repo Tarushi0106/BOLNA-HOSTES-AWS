@@ -71,62 +71,70 @@ body {
 }
 
 /* ====== NAVBAR ====== */
+/* make navbar taller and give room for a larger logo */
 .navbar {
   background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.25);
+  box-shadow: 0 6px 18px rgba(231, 76, 60, 0.18);
   position: sticky;
   top: 0;
   z-index: 100;
-  padding-top: 18px;      /* create space for logo above */
-  min-height: 70px;
+  padding-top: 8px;
+  min-height: 92px; /* increased to fit larger logo */
   box-sizing: border-box;
 }
 
+/* container: keep content vertically centered and sane padding */
 .navbar-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1.5rem;
-  height: 70px;
+  height: 92px; /* match navbar min-height */
 }
 
+/* brand area: logo inside a white rounded panel */
 .navbar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 180px;
 }
 
+/* larger, card-like logo */
 .navbar-logo {
-  height: 44px;
+  height: 64px;          /* larger logo */
   width: auto;
   object-fit: contain;
+  background: #fff;      /* white card behind logo */
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
   display: block;
 }
 
-.brand-text .brand-title {
-  font-size: 16px;
-  color: #fff;
-  margin: 0;
-  font-weight: 700;
+/* hide textual brand — keep markup but not visible */
+.brand-text,
+.brand-title,
+.brand-sub {
+  display: none !important;
 }
 
-.brand-text .brand-sub {
-  font-size: 11px;
-  color: rgba(255,255,255,0.95);
-}
-
+/* center title: ensure it's visually centered and not clickable */
 .navbar-center {
   flex: 1;
   text-align: center;
   pointer-events: none;
+  padding-top: 6px;
 }
 
 .nav-title {
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
   font-size: 1.05rem;
+  letter-spacing: 0.2px;
 }
 
+/* right-side user controls tuned to brand */
 .navbar-user {
   pointer-events: auto;
   display: flex;
@@ -134,52 +142,40 @@ body {
   gap: 12px;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
+/* avatar: softer white background and smaller shadow */
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.3);
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.22);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-.user-details {
-  display: flex;
-  flex-direction: column;
-  color: var(--white);
-}
-
-.user-name {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
+/* logout button: solid white border, subtle background */
 .logout-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
   color: var(--white);
   cursor: pointer;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  font-size: 0.95rem;
+}
+.logout-btn:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
 }
 
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: var(--white);
+/* make sure navbar doesn't overlap content */
+.dashboard-main { 
+  margin-top: 6px; 
 }
 
 /* ====== MAIN CONTENT AREA ====== */
@@ -506,58 +502,23 @@ body {
 }
 
 @media (max-width: 768px) {
+  .navbar {
+    padding-top: 6px;
+    min-height: 72px;
+  }
   .navbar-container {
-    padding: 0 1rem;
-    height: 60px;
+    height: 72px;
   }
-
   .navbar-logo {
-    height: 50px;
+    height: 48px;
+    padding: 6px 10px;
+    border-radius: 8px;
   }
-
-  .nav-title {
-    font-size: 0.9rem;
-  }
-
-  .user-details {
-    display: none;
-  }
-
-  .content {
-    padding: 1rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .header-left h1 {
-    font-size: 1.5rem;
-  }
-
-  .data-table {
-    min-width: 600px;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 0.75rem;
+  .user-avatar {
+    width: 40px;
+    height: 40px;
     font-size: 0.85rem;
   }
-
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .brand-text .brand-title { font-size: 14px; }
-  .navbar-logo { height: 36px; }
   .nav-title { font-size: 0.95rem; }
 }
 

@@ -5,11 +5,15 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Auth.css';
 
+// ✅ IMPORT LOGO FROM ASSETS (Vite way)
+import shauryaLogo from '../assets/shaurya-logo.png';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -18,35 +22,42 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await axios.post('/api/auth/login', {
+        email,
+        password,
+      });
+
       const { token, user } = response.data;
 
-      // Save token and user info to localStorage or context
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Redirect to dashboard or another page
       navigate('/dashboard');
     } catch (err) {
-      setLoading(false);
       setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="auth-page">
       <div className="auth-header">
+        {/* ✅ LOGO */}
         <img
-          src="/shaurya-logo.png"
+          src={shauryaLogo}
           alt="Shaurya Teleservices"
           className="auth-logo"
-          onError={(e) => { e.target.style.display = 'none'; }}
         />
+
         <h1 className="auth-title">Shaurya Teleservices</h1>
       </div>
+
       <form className="auth-form" onSubmit={handleSubmit}>
         <h2>Login to your account</h2>
+
         {error && <div className="error-message">{error}</div>}
+
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
@@ -57,6 +68,7 @@ const Login = () => {
             required
           />
         </div>
+
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
@@ -67,11 +79,15 @@ const Login = () => {
             required
           />
         </div>
+
         <button type="submit" className="btn" disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </button>
+
         <div className="auth-footer">
-          <p>Don't have an account? <a href="/signup">Sign up</a></p>
+          <p>
+            Don&apos;t have an account? <a href="/signup">Sign up</a>
+          </p>
         </div>
       </form>
     </div>

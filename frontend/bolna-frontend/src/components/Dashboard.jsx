@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import shaurrya_logo from '../assets/shaurrya_logo.png';
+
+
 
 const Dashboard = () => {
   const [calls, setCalls] = useState([]);
@@ -141,9 +144,21 @@ const Dashboard = () => {
       {/* Top Navigation Bar */}
       <nav className="navbar">
         <div className="navbar-container">
-          <div className="navbar-brand">
-            <h2>📞 BolnaCall</h2>
-          </div>
+         <div className="navbar-brand">
+<img
+  src={shaurrya_logo}
+  alt="Shaurrya Teleservices"
+  className="navbar-logo"
+/>
+
+
+
+  <div className="brand-text">
+    <div className="brand-title">SHAURRYA</div>
+    <div className="brand-sub">Teleservices</div>
+  </div>
+</div>
+
           <div className="navbar-center">
             <span className="nav-title">Calls Management System</span>
           </div>
