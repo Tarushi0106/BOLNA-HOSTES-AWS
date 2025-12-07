@@ -99,28 +99,32 @@ app.post('/api/auth/login', async (req, res) => {
 // ---------- GET CALLS (NO LIMIT) ----------
 const Calls = require('./models/Calls');
 
+// Replace your existing app.get('/api/calls', ...) with this handler
 app.get('/api/calls', async (req, res) => {
   try {
-    // REMOVED .limit(100) - now fetches ALL calls
+    // support query param ?limit=50
+    const limit = Math.min(parseInt(req.query.limit || '100', 10), 1000);
     const calls = await Calls.find({})
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    // compute total number of documents in collection (unique count)
+    const total = await Calls.countDocuments();
 
     const normalized = calls.map(c => ({
       _id: c._id,
-      name: c.name || 'N/A',
-      phone_number: c.phone_number || 'N/A',
-      email: c.email || 'N/A',
-      summary: c.summary || 'N/A',
-      best_time_to_call: c.best_time_to_call || 'N/A',
+      name: c.name || c.Name || 'N/A',
+      phone_number: c.phone_number || c.Phone || c.phone || c.phone_number || 'N/A',
+      email: c.email || c.Email || 'N/A',
+      summary: c.summary || c.Summary || 'N/A',
+      best_time_to_call: c.best_time_to_call || c.bestTimeToCall || c['Best Time to Call'] || 'N/A',
       whatsapp_status: c.whatsapp_status || 'pending',
       whatsapp_message_id: c.whatsapp_message_id || null,
       createdAt: c.createdAt
     }));
 
-    res.json({
-      total: normalized.length,
-      calls: normalized
-    });
+    // Return both page and total count so UI can show real totals
+    res.json({ calls: normalized, total });
   } catch (err) {
     console.error('Fetch calls error:', err);
     res.status(500).json({ message: 'Failed to fetch calls' });
