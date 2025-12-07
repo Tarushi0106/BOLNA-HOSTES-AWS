@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const callSchema = new mongoose.Schema({
-  bolna_call_id: { type: String }, // ✅ remove index:true
+  call_id: String,
   name: String,
   email: String,
   phone_number: String,
@@ -20,13 +20,14 @@ const callSchema = new mongoose.Schema({
   whatsapp_message_id: String,
   whatsapp_sent_at: Date,
   whatsapp_error: String
-}, { timestamps: true });
+}, {
+  strict: false,
+  timestamps: true
+});
 
-// ✅ UNIQUE + DUPLICATE PROTECTION
-callSchema.index({ bolna_call_id: 1 }, { unique: true, sparse: true });
-callSchema.index(
-  { phone_number: 1, call_timestamp: 1 },
-  { unique: true, sparse: true }
-);
+// If you need an index on call_id or whatsapp_message_id, define it here once.
+// For example, keep this and remove index: true on the field definition (if present):
+callSchema.index({ whatsapp_message_id: 1 }, { unique: false });
+callSchema.index({ call_id: 1 }, { unique: false });
 
-module.exports = mongoose.model('BolnaCall', callSchema, 'bolnaCalls');
+module.exports = mongoose.model('Calls', callSchema, 'bolnaCalls');

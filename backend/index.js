@@ -10,6 +10,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Add small request logger for debugging incoming requests
+app.use((req, res, next) => {
+	console.log(`➡️  ${new Date().toISOString()} ${req.method} ${req.originalUrl}`);
+	next();
+});
+
 // ---------- MongoDB ----------
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB Connected'))
@@ -189,7 +195,8 @@ app.use((req, res) => {
 });
 
 // ---------- SERVER ----------
-const PORT = process.env.PORT || 4000;
+// changed default port from 4000 to 5000 so frontend requests to :5000 match backend
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`🚀 Backend running on http://localhost:${PORT}`)
 );

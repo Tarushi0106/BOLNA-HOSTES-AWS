@@ -71,24 +71,54 @@ const Dashboard = () => {
     return normalized;
   };
 
+  // Replace existing fetchCalls with this resilient implementation
   const fetchCalls = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await axios.get(`${API_URL}/calls`);
+    const portsToTry = [5000, 4000];
+    let lastError = null;
 
-      // DEBUG: inspect the exact payload shape in the browser console
-      console.log('DEBUG /api/calls response.data:', response.data);
+    setLoading(true);
+    setError(null);
 
-      const normalizedCalls = normalizeCallsPayload(response.data);
-      setCalls(normalizedCalls);
+    for (const port of portsToTry) {
+      const base = `http://localhost:${port}/api`;
+      try {
+        const res = await axios.get(`${base}/calls`);
+        console.log(`Calls API response from ${base}:`, res.data);
 
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to fetch calls data. Make sure backend server is running and /api/calls returns an array.');
-      console.error('Error fetching calls:', err, err?.response?.data || '');
-      setLoading(false);
+        const payload = res.data.calls || res.data || [];
+        const normalized = normalizeCallsPayload(payload);
+        setCalls(normalized);
+
+        // try fetching stats (best-effort)
+        try {
+          const statsRes = await axios.get(`${base}/dashboard/stats`);
+          setStats(statsRes.data.stats || null);
+        } catch (sErr) {
+          console.warn(`Could not fetch stats from ${base}:`, sErr.message);
+          setStats(null);
+        }
+
+        setLoading(false);
+        return; // success, stop trying other ports
+      } catch (err) {
+        lastError = err;
+        console.warn(`Request to ${base}/calls failed:`, err?.response?.status || err.message);
+        // try next port
+      }
     }
+
+    // none worked
+    const status = lastError?.response?.status;
+    const body = lastError?.response?.data;
+    const msg = [
+      'Failed to fetch calls from backend.',
+      status ? `Last status: ${status}.` : '',
+      body ? `Last response: ${JSON.stringify(body)}` : lastError?.message,
+      'Tried: http://localhost:5000/api and http://localhost:4000/api.'
+    ].filter(Boolean).join(' ');
+    setError(msg);
+    console.error('Error fetching calls:', lastError);
+    setLoading(false);
   };
 
   const handleLogout = () => {
