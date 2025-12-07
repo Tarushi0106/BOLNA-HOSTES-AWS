@@ -2,7 +2,8 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const { sendWhatsAppMessage, updateWhatsAppStatus } = require('./whatsappService');
+const { sendWhatsAppMessage } = require('./whatsappService');
+
 
 const BOLNA_AGENT_ID = process.env.BOLNA_AGENT_ID;
 const BOLNA_API_KEY = process.env.BOLNA_API_KEY;
@@ -426,21 +427,20 @@ async function processBolnaCalls() {
         );
 
         if (whatsappResult.success) {
-          await updateWhatsAppStatus(
-            savedCall._id,
-            'sent',
-            whatsappResult.messageId
-          );
+          await BolnaCall.findByIdAndUpdate(savedCall._id, {
+  whatsapp_status: 'sent',
+  whatsapp_message_id: whatsappResult.data?.request_id || null,
+  whatsapp_sent_at: new Date(),
+  whatsapp_error: null
+});
           whatsappCount++;
           console.log(`✅ WhatsApp sent successfully`);
         } else {
-          await updateWhatsAppStatus(
-            savedCall._id,
-            'failed',
-            null,
-            whatsappResult.error
-          );
-          console.error(`❌ WhatsApp failed: ${whatsappResult.error}`);
+         await BolnaCall.findByIdAndUpdate(savedCall._id, {
+  whatsapp_status: 'failed',
+  whatsapp_error: JSON.stringify(whatsappResult.error)
+});
+
         }
       }
 
