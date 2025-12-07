@@ -6,7 +6,7 @@ import axios from 'axios';
 import './Auth.css';
 
 // ✅ IMPORT LOGO FROM ASSETS (Vite way)
-import shauryaLogo from '../assets/shaurya-logo.png';
+import shauryaLogo from '../assets/shaurrya_logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -22,7 +22,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/login', {
+      const response =  await axios.post(
+        'http://localhost:5001/api/auth/login', {
         email,
         password,
       });

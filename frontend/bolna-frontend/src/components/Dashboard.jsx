@@ -18,8 +18,7 @@ const Dashboard = () => {
   const ENV_BASE = import.meta.env.VITE_API_BASE ? import.meta.env.VITE_API_BASE.replace(/\/$/, '') : null;
   const POSSIBLE_BASES = [
     ENV_BASE,
-    'http://localhost:5000',
-    'http://localhost:4000'
+    'http://localhost:5001'
   ].filter(Boolean).map(b => `${b}/api`);
 
   useEffect(() => {
