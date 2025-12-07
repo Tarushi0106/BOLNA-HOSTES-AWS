@@ -5,13 +5,19 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const [calls, setCalls] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  const API_URL =
-    (import.meta.env.VITE_API_BASE || 'http://localhost:4000') + '/api';
+  // We'll try these backend bases in order (env override first if present)
+  const ENV_BASE = import.meta.env.VITE_API_BASE ? import.meta.env.VITE_API_BASE.replace(/\/$/, '') : null;
+  const POSSIBLE_BASES = [
+    ENV_BASE,
+    'http://localhost:5000',
+    'http://localhost:4000'
+  ].filter(Boolean).map(b => `${b}/api`);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -71,53 +77,44 @@ const Dashboard = () => {
     return normalized;
   };
 
-  // Replace existing fetchCalls with this resilient implementation
   const fetchCalls = async () => {
-    const portsToTry = [5000, 4000];
-    let lastError = null;
-
     setLoading(true);
     setError(null);
+    let lastError = null;
 
-    for (const port of portsToTry) {
-      const base = `http://localhost:${port}/api`;
+    for (const base of POSSIBLE_BASES) {
       try {
-        const res = await axios.get(`${base}/calls`);
+        // try calls endpoint
+        const res = await axios.get(`${base}/calls`, { timeout: 8000 });
         console.log(`Calls API response from ${base}:`, res.data);
 
         const payload = res.data.calls || res.data || [];
-        const normalized = normalizeCallsPayload(payload);
-        setCalls(normalized);
+        setCalls(normalizeCallsPayload(payload));
 
-        // try fetching stats (best-effort)
+        // best-effort stats
         try {
-          const statsRes = await axios.get(`${base}/dashboard/stats`);
-          setStats(statsRes.data.stats || null);
+          const statsRes = await axios.get(`${base}/dashboard/stats`, { timeout: 5000 });
+          setStats(statsRes.data?.stats || null);
         } catch (sErr) {
-          console.warn(`Could not fetch stats from ${base}:`, sErr.message);
+          console.warn(`Could not fetch stats from ${base}:`, sErr?.message || sErr);
           setStats(null);
         }
 
         setLoading(false);
-        return; // success, stop trying other ports
+        return; // success
       } catch (err) {
         lastError = err;
         console.warn(`Request to ${base}/calls failed:`, err?.response?.status || err.message);
-        // try next port
+        // try next base
       }
     }
 
-    // none worked
+    // none succeeded
     const status = lastError?.response?.status;
     const body = lastError?.response?.data;
-    const msg = [
-      'Failed to fetch calls from backend.',
-      status ? `Last status: ${status}.` : '',
-      body ? `Last response: ${JSON.stringify(body)}` : lastError?.message,
-      'Tried: http://localhost:5000/api and http://localhost:4000/api.'
-    ].filter(Boolean).join(' ');
-    setError(msg);
-    console.error('Error fetching calls:', lastError);
+    const detail = body ? ` Response: ${JSON.stringify(body)}` : ` Error: ${lastError?.message || 'unknown'}`;
+    setError(`Failed to fetch calls from backend. ${status ? `Last status: ${status}.` : ''}${detail} Tried: ${POSSIBLE_BASES.join(', ')}.`);
+    console.error('Error fetching calls (all bases tried):', lastError);
     setLoading(false);
   };
 
@@ -196,7 +193,7 @@ const Dashboard = () => {
                   <div className="stat-icon">📊</div>
                   <span className="stat-label">Total Calls</span>
                 </div>
-                <div className="stat-value">{safeCalls.length}</div>
+                <div className="stat-value">{stats?.total_calls || safeCalls.length}</div>
                 <div className="stat-footer">All time records</div>
               </div>
 

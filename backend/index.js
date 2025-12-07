@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const cron = require('node-cron');
+const { processBolnaCalls } = require('./services/bolnaService');
 require('dotenv').config();
 
 const app = express();
@@ -141,7 +143,6 @@ app.get('/api/calls', async (req, res) => {
 app.post('/api/sync-bolna', async (req, res) => {
   try {
     console.log('🔄 Starting Bolna sync...');
-    const { processBolnaCalls } = require('./services/bolnaService');
     
     const result = await processBolnaCalls();
     
@@ -189,6 +190,96 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend working ✅' });
 });
 
+// add near other routes (before 404 handler)
+const { sendWhatsAppMessage } = require('./services/whatsappService');
+
+app.post('/api/test-whatsapp', async (req, res) => {
+  try {
+    const { phone, message, name } = req.body;
+    if (!phone) {
+      return res.status(400).json({ success: false, error: 'phone is required (include country code, e.g. 919876543210)' });
+    }
+
+    // Build minimal callData expected by whatsappService
+    const callData = {
+      name: name || 'Test User',
+      summary: message || 'This is a test WhatsApp message from Shaurya Teleservices.',
+      best_time_to_call: null,
+      email: null,
+      phone_number: phone
+    };
+
+    const result = await sendWhatsAppMessage(phone, callData);
+
+    if (result.success) {
+      return res.json({ success: true, messageId: result.messageId, timestamp: result.timestamp });
+    } else {
+      return res.status(500).json({ success: false, error: result.error || 'Unknown error from WhatsApp API' });
+    }
+  } catch (err) {
+    console.error('Test WhatsApp error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ---------- SCHEDULER STATUS ----------
+let bolnaCronJob = null;
+let bolnaCronStatus = 'stopped'; // 'running' | 'stopped'
+let bolnaLastRun = null;
+let bolnaNextRun = null;
+
+// schedule in listen/start block (example: every 30 minutes)
+function startBolnaCron() {
+	// avoid duplicate scheduling
+	if (bolnaCronJob) return;
+	bolnaCronJob = cron.schedule('*/30 * * * *', async () => {
+		bolnaCronStatus = 'running';
+		bolnaLastRun = new Date().toISOString();
+		try {
+			await processBolnaCalls();
+		} catch (err) {
+			console.error('❌ Cron sync failed:', err?.message || err);
+		} finally {
+			// compute rough next run time (30 min)
+			const next = new Date(Date.now() + 30 * 60 * 1000);
+			bolnaNextRun = next.toISOString();
+			bolnaCronStatus = 'scheduled';
+		}
+	}, {
+		scheduled: true,
+		timezone: process.env.CRON_TIMEZONE || 'UTC'
+	});
+	bolnaCronStatus = 'scheduled';
+	bolnaNextRun = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+}
+
+// Expose status endpoint
+app.get('/api/scheduler/status', (req, res) => {
+	res.json({
+		success: true,
+		scheduler: {
+			name: 'bolna-sync',
+			status: bolnaCronStatus,
+			lastRun: bolnaLastRun,
+			nextRun: bolnaNextRun,
+			schedule: '*/30 * * * * (every 30 minutes)'
+		}
+	});
+});
+
+// Manual run endpoint
+app.post('/api/scheduler/run-now', async (req, res) => {
+	try {
+		bolnaLastRun = new Date().toISOString();
+		await processBolnaCalls();
+		bolnaNextRun = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+		return res.json({ success: true, message: 'Manual sync completed', lastRun: bolnaLastRun });
+	} catch (err) {
+		console.error('Manual sync error:', err);
+		return res.status(500).json({ success: false, error: err.message || err });
+	}
+});
+
 // ---------- 404 ----------
 app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint not found' });
@@ -197,6 +288,7 @@ app.use((req, res) => {
 // ---------- SERVER ----------
 // changed default port from 4000 to 5000 so frontend requests to :5000 match backend
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Backend running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+	console.log(`🚀 Backend running on http://localhost:${PORT}`);
+	startBolnaCron();
+});

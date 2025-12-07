@@ -77,58 +77,61 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+  padding-top: 18px;      /* create space for logo above */
+  min-height: 70px;
+  box-sizing: border-box;
 }
 
 .navbar-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
   height: 70px;
-  max-width: 100%;
-  margin: 0 auto;
 }
 
 .navbar-brand {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
 }
 
 .navbar-logo {
-  height: 60px;
+  height: 44px;
   width: auto;
   object-fit: contain;
+  display: block;
 }
 
-.logo-fallback {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.logo-text {
-  font-size: 1.4rem;
+.brand-text .brand-title {
+  font-size: 16px;
+  color: #fff;
+  margin: 0;
   font-weight: 700;
-  color: var(--white);
-  letter-spacing: 2px;
+}
+
+.brand-text .brand-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.95);
 }
 
 .navbar-center {
   flex: 1;
   text-align: center;
+  pointer-events: none;
 }
 
 .nav-title {
   font-weight: 600;
-  color: var(--white);
-  font-size: 1.1rem;
+  color: #fff;
+  font-size: 1.05rem;
 }
 
 .navbar-user {
+  pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 12px;
 }
 
 .user-info {
@@ -476,6 +479,25 @@ body {
   margin-bottom: 1.5rem;
 }
 
+/* ====== TOP LOGO ====== */
+.top-logo-container {
+  position: fixed;
+  top: 8px;               /* distance from top of viewport */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  pointer-events: none;   /* logo doesn't capture clicks */
+}
+
+.top-logo {
+  height: 56px;           /* adjust as needed */
+  width: auto;
+  display: block;
+  object-fit: contain;
+  filter: none;
+  -webkit-user-drag: none;
+}
+
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1024px) {
   .stats-grid {
@@ -533,6 +555,10 @@ body {
     align-items: flex-start;
     gap: 1rem;
   }
+
+  .brand-text .brand-title { font-size: 14px; }
+  .navbar-logo { height: 36px; }
+  .nav-title { font-size: 0.95rem; }
 }
 
 @media (max-width: 480px) {
