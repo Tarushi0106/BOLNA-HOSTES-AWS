@@ -1,0 +1,534 @@
+/* ====== GLOBAL STYLES ====== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-red: #E74C3C;
+  --dark-red: #C0392B;
+  --light-red: #FADBD8;
+  --white: #FFFFFF;
+  --light-gray: #ECF0F1;
+  --text-dark: #1a1a1a;
+  --border-color: #BDC3C7;
+  --success: #27AE60;
+  --danger: #E74C3C;
+  --warning: #F39C12;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--white);
+  color: var(--text-dark);
+}
+
+/* ====== LOADING STATE ====== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: var(--white);
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--light-gray);
+  border-top: 4px solid var(--primary-red);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading {
+  color: var(--text-dark);
+  margin-top: 20px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* ====== LAYOUT ====== */
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--white);
+}
+
+/* ====== NAVBAR ====== */
+/* make navbar taller and give room for a larger logo */
+.navbar {
+  background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+  box-shadow: 0 6px 18px rgba(231, 76, 60, 0.18);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding-top: 8px;
+  min-height: 92px; /* increased to fit larger logo */
+  box-sizing: border-box;
+}
+
+/* container: keep content vertically centered and sane padding */
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 92px; /* match navbar min-height */
+}
+
+/* brand area: logo inside a white rounded panel */
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+/* larger, card-like logo */
+.navbar-logo {
+  height: 64px;          /* larger logo */
+  width: auto;
+  object-fit: contain;
+  background: #fff;      /* white card behind logo */
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  display: block;
+}
+
+/* hide textual brand — keep markup but not visible */
+.brand-text,
+.brand-title,
+.brand-sub {
+  display: none !important;
+}
+
+/* center title: ensure it's visually centered and not clickable */
+.navbar-center {
+  flex: 1;
+  text-align: center;
+  pointer-events: none;
+  padding-top: 6px;
+}
+
+.nav-title {
+  font-weight: 700;
+  color: #fff;
+  font-size: 1.05rem;
+  letter-spacing: 0.2px;
+}
+
+/* right-side user controls tuned to brand */
+.navbar-user {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* avatar: softer white background and smaller shadow */
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* logout button: solid white border, subtle background */
+.logout-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: var(--white);
+  cursor: pointer;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  font-size: 0.95rem;
+}
+.logout-btn:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+
+/* make sure navbar doesn't overlap content */
+.dashboard-main { 
+  margin-top: 6px; 
+}
+
+/* ====== MAIN CONTENT AREA ====== */
+.dashboard-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background: var(--white);
+}
+
+/* ====== PAGE HEADER ====== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+
+.header-left h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.header-subtitle {
+  color: #7F8C8D;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ====== BUTTONS ====== */
+.btn-primary {
+  background: var(--primary-red);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+  background: var(--dark-red);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+}
+
+/* ====== STATS SECTION ====== */
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--white);
+  border-left: 5px solid var(--primary-red);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15);
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-icon {
+  font-size: 2rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #7F8C8D;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-red);
+  margin: 0.5rem 0;
+}
+
+.stat-footer {
+  font-size: 0.85rem;
+  color: #95A5A6;
+}
+
+/* ====== TABLE SECTION ====== */
+.table-section {
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.record-count {
+  background: var(--light-red);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--dark-red);
+  font-weight: 600;
+  border: 1px solid var(--light-red);
+}
+
+/* ====== DATA TABLE ====== */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.data-table thead {
+  background: var(--light-gray);
+  border-bottom: 2px solid var(--primary-red);
+}
+
+.data-table th {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-weight: 700;
+  color: var(--primary-red);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.data-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+  background: var(--light-gray);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ====== TABLE CELLS ====== */
+.index-cell {
+  font-weight: 700;
+  color: var(--primary-red);
+  width: 50px;
+}
+
+.name-cell {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.action-link {
+  color: var(--primary-red);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.phone-link::before {
+  content: '📞 ';
+  margin-right: 0.25rem;
+}
+
+.email-link::before {
+  content: '✉️ ';
+  margin-right: 0.25rem;
+}
+
+.badge {
+  display: inline-block;
+  background: var(--light-red);
+  color: var(--dark-red);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--light-red);
+}
+
+/* WhatsApp Status Badge Styles */
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.status-sent {
+  background: #D5F4E6;
+  color: #0E6251;
+  border-color: #D5F4E6;
+}
+
+.status-failed {
+  background: var(--light-red);
+  color: #922B21;
+  border-color: var(--light-red);
+}
+
+.status-pending {
+  background: #FEF5E7;
+  color: #D68910;
+  border-color: #FEF5E7;
+}
+
+.status-unsent {
+  background: #D5D8DC;
+  color: #212F3C;
+  border-color: #D5D8DC;
+}
+
+.summary-text {
+  color: #7F8C8D;
+  line-height: 1.5;
+}
+
+.na-text {
+  color: #95A5A6;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ====== EMPTY STATE ====== */
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #7F8C8D;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ====== TOP LOGO ====== */
+.top-logo-container {
+  position: fixed;
+  top: 8px;               /* distance from top of viewport */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  pointer-events: none;   /* logo doesn't capture clicks */
+}
+
+.top-logo {
+  height: 56px;           /* adjust as needed */
+  width: auto;
+  display: block;
+  object-fit: contain;
+  filter: none;
+  -webkit-user-drag: none;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding-top: 6px;
+    min-height: 72px;
+  }
+  .navbar-container {
+    height: 72px;
+  }
+  .navbar-logo {
+    height: 48px;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.85rem;
+  }
+  .nav-title { font-size: 0.95rem; }
+}
+
+@media (max-width: 480px) {
+  .data-table th:nth-child(n+5),
+  .data-table td:nth-child(n+5) {
+    display: none;
+  }
+
+  .section-header {
+    padding: 1rem;
+  }
+}

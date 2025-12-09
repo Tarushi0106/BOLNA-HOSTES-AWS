@@ -1,508 +1,423 @@
-const axios = require('axios');
+// // services/bolnaService.js
+// console.log('🔥 bolnaService.js LOADED');
+
+// const mongoose = require('mongoose');
+// const path = require('path');
+// require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+// const Calls = require('../models/Calls');
+// const { extractNameAndSummary } = require('./groqSummary');
+// const {
+//   extractEmail,
+//   extractPhone,
+//   extractBestTime,
+// } = require('./extractFields');
+
+// const MONGODB_URI = process.env.MONGODB_URI;
+
+// /* -----------------------------------------
+//    ✅ CLEAN BOLNA TRANSCRIPT (CRITICAL FIX)
+// ------------------------------------------ */
+// function extractCleanTranscript(call) {
+//   // Case 1: Bolna already gives plain transcript
+//   if (call.transcript && call.transcript.trim()) {
+//     return call.transcript.trim();
+//   }
+
+//   // Case 2: ASR lattice format (conversation.turns)
+//   if (!call.conversation?.turns) return '';
+
+//   return call.conversation.turns
+//     .map(turn => {
+//       if (!Array.isArray(turn.turn_latency)) return '';
+//       const last = turn.turn_latency[turn.turn_latency.length - 1];
+//       return last?.text || '';
+//     })
+//     .filter(Boolean)
+//     .join('\n');
+// }
+
+// // --- NEW: heuristic fallback to extract a person's name from transcript/email
+// function fallbackExtractName(transcript, emailCandidate) {
+//   if (!transcript && !emailCandidate) return null;
+//   const text = (transcript || '').replace(/\s+/g, ' ').trim();
+
+//   // common name phrases
+//   const patterns = [
+//     /(?:my name is|this is|i am|i'm|name is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/i,
+//     /(?:this is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/i,
+//     /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(?:speaking|here|on the line)/im,
+//     /(?:this is|hi,|hello,)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/i
+//   ];
+
+//   for (const re of patterns) {
+//     const m = text.match(re);
+//     if (m && m[1]) {
+//       return m[1].trim();
+//     }
+//   }
+
+//   // Look for capitalized word sequences (first occurrence)
+//   const caps = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/);
+//   if (caps && caps[1]) {
+//     const candidate = caps[1].trim();
+//     // reject common words
+//     const reject = ['Hello','Hi','Thanks','Thank','Yes','No','Okay','OK'];
+//     if (!reject.includes(candidate.split(' ')[0])) return candidate;
+//   }
+
+//   // Derive from email local-part if available
+//   if (emailCandidate) {
+//     const local = String(emailCandidate).split('@')[0];
+//     const parts = local.split(/[.\-_]/).filter(Boolean);
+//     if (parts.length) {
+//       const nameParts = parts.slice(0, 2).map(p => p.charAt(0).toUpperCase() + p.slice(1));
+//       return nameParts.join(' ');
+//     }
+//   }
+
+//   return null;
+// }
+
+// // --- NEW: simple summary fallback (first meaningful sentence, max 40 words)
+// function fallbackExtractSummary(transcript) {
+//   if (!transcript) return '';
+//   const cleaned = transcript.replace(/\s+/g, ' ').trim();
+//   const sentences = cleaned.split(/(?<=[.?!])\s+/);
+//   for (const s of sentences) {
+//     const words = s.split(/\s+/).filter(Boolean);
+//     if (words.length >= 5) {
+//       // limit to 40 words
+//       return words.slice(0, 40).join(' ').replace(/[.?!]*$/,'').trim();
+//     }
+//   }
+//   // fallback to first 120 chars
+//   return cleaned.substring(0, 120).trim();
+// }
+
+// /* -----------------------------------------
+//    ✅ MAIN PROCESSOR
+// ------------------------------------------ */
+// async function processSingleBolnaCall(call) {
+//   await mongoose.connect(MONGODB_URI);
+
+//   const exists = await Calls.findOne({ bolna_call_id: call.id });
+//   if (exists) {
+//     console.log('⏭️ Duplicate skipped:', call.id);
+//     return;
+//   }
+
+//   // ✅ CLEAN TRANSCRIPT
+//   const transcript = extractCleanTranscript(call);
+
+//   // ✅ AI: name + summary (ONLY from Groq) - may return empty
+//   let ai = { name: null, summary: '' };
+//   try {
+//     ai = (await extractNameAndSummary(transcript)) || {};
+//   } catch (e) {
+//     console.warn('AI name/summary extraction failed, will use fallback heuristics:', e?.message || e);
+//     ai = {};
+//   }
+
+//   // Deterministic fields
+//   const email = extractEmail(transcript) || null;
+//   const phone = extractPhone(transcript) || null;
+//   const best_time_to_call = extractBestTime(transcript) || null;
+
+//   // Use AI result if valid, otherwise apply heuristic fallbacks
+//   let name = (ai.name || '').trim() || null;
+//   if (!name || name.toLowerCase() === 'n/a') {
+//     const fallback = fallbackExtractName(transcript, email);
+//     if (fallback) {
+//       console.log(`⚙️  Fallback name used for call ${call.id}:`, fallback);
+//       name = fallback;
+//     } else {
+//       // last resort derive from email
+//       if (email) {
+//         const local = String(email).split('@')[0].replace(/[._-]/g, ' ');
+//         name = local.split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1)).slice(0,2).join(' ');
+//         console.log(`⚙️  Derived name from email for call ${call.id}:`, name);
+//       } else {
+//         name = null;
+//       }
+//     }
+//   }
+
+//   let summary = (ai.summary || '').trim() || '';
+//   if (!summary) {
+//     summary = fallbackExtractSummary(transcript);
+//     if (summary) console.log(`⚙️  Fallback summary used for call ${call.id}`);
+//   }
+
+//   await Calls.create({
+//     bolna_call_id: call.id,
+//     transcript,
+//     name: name || null,
+//     email: email || null,
+//     phone_number: phone || null,
+//     best_time_to_call: best_time_to_call || null,
+//     summary: summary || '',
+//     source: 'bolna',
+//     status: call.status,
+//     created_at: call.created_at || new Date(),
+//   });
+
+//   console.log('✅ Call saved:', call.id, '| name:', name || '(blank)');
+// }
+
+// module.exports = { processSingleBolnaCall };
+// services/bolnaService.js
+console.log('🔥 bolnaService.js LOADED');
+
 const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const Calls = require('../models/Calls');
+const { extractNameAndSummary } = require('./groqSummary');
+const {
+  extractEmail,
+  extractPhone,
+  extractBestTime,
+} = require('./extractFields');
 const { sendWhatsAppMessage } = require('./whatsappService');
 
-
-const BOLNA_AGENT_ID = process.env.BOLNA_AGENT_ID;
-const BOLNA_API_KEY = process.env.BOLNA_API_KEY;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!BOLNA_AGENT_ID || !BOLNA_API_KEY || !GROQ_API_KEY || !MONGODB_URI) {
-  console.error('❌ Missing required environment variables');
-  process.exit(1);
-}
-
-const BOLNA_API_URL = `https://api.bolna.ai/agent/${BOLNA_AGENT_ID}/executions`;
-
-let groq;
-function initGroq() {
-  if (!groq) {
-    const Groq = require('groq-sdk');
-    groq = new Groq({ apiKey: GROQ_API_KEY });
-  }
-  return groq;
-}
-
-/* -------------------- DATABASE -------------------- */
-
-async function connectDB() {
-  await mongoose.connect(MONGODB_URI);
-  console.log('✅ MongoDB connected');
-}
-
-function getBolnaCallModel() {
-  try {
-    return mongoose.model('BolnaCall');
-  } catch {
-    const schema = new mongoose.Schema({
-      bolna_call_id: { type: String, unique: true, sparse: true },
-      name: String,
-      email: String,
-      phone_number: String,
-      best_time_to_call: String,
-      summary: String,
-      transcript: String,
-      call_duration: Number,
-      call_timestamp: Date,
-      user_number: String,
-      source: { type: String, default: 'bolna-ai' },
-      whatsapp_status: {
-        type: String,
-        enum: ['not_sent', 'pending', 'sent', 'failed'],
-        default: 'pending'
-      },
-      whatsapp_message_id: String,
-      whatsapp_sent_at: Date,
-      whatsapp_error: String,
-      createdAt: { type: Date, default: Date.now }
-    });
-
-    schema.index({ phone_number: 1, call_timestamp: 1 });
-    return mongoose.model('BolnaCall', schema, 'bolnaCalls');
+// ------------------ DB CONNECTION (SAFE) ------------------
+let isConnected = false;
+async function ensureMongo() {
+  if (!isConnected) {
+    await mongoose.connect(MONGODB_URI);
+    isConnected = true;
+    console.log('✅ MongoDB connected');
   }
 }
 
-/* -------------------- BOLNA FETCH -------------------- */
-
-async function fetchBolnaCalls(options = {}) {
-  try {
-    console.log('\n🔐 Bolna API Debug Info:');
-    console.log(`   Agent ID: ${BOLNA_AGENT_ID ? '✅ Set' : '❌ Missing'}`);
-    console.log(`   API Key: ${BOLNA_API_KEY ? '✅ Set (***' + BOLNA_API_KEY.slice(-4) + ')' : '❌ Missing'}`);
-    console.log(`   URL: ${BOLNA_API_URL}`);
-    console.log(`   Method: GET`);
-
-    const res = await axios.get(BOLNA_API_URL, {
-      headers: {
-        Authorization: `Bearer ${BOLNA_API_KEY}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      params: options
-    });
-
-    console.log('✅ API call successful');
-    console.log('📊 Raw API response count:', Array.isArray(res.data) ? res.data.length : Array.isArray(res.data.executions) ? res.data.executions.length : 'unknown');
-
-    return Array.isArray(res.data) ? res.data : (Array.isArray(res.data.executions) ? res.data.executions : []);
-  } catch (err) {
-    console.error('\n❌ fetchBolnaCalls error:');
-    console.error(`   Status: ${err.response?.status || 'N/A'}`);
-    console.error(`   Message: ${err.message}`);
-    return [];
+// ------------------ CLEAN TRANSCRIPT ------------------
+function extractCleanTranscript(call) {
+  if (call.transcript && call.transcript.trim()) {
+    return call.transcript.trim();
   }
+
+  if (!call.conversation?.turns) return '';
+
+  return call.conversation.turns
+    .map(t => {
+      if (!Array.isArray(t.turn_latency)) return '';
+      const last = t.turn_latency[t.turn_latency.length - 1];
+      return last?.text || '';
+    })
+    .filter(Boolean)
+    .join('\n');
 }
 
-/* -------------------- GROQ EXTRACTION -------------------- */
+// ------------------ NAME SANITY FILTER ------------------
+const NAME_BLACKLIST = [
+  'digital',
+  'certification',
+  'connectivity',
+  'services',
+  'solutions',
+  'tele',
+  'teleservices',
+  'authority',
+  'framework',
+  'ratings',
+  'institute'
+];
 
-async function extractDataWithGroq(transcript, userNumber, retries = 0) {
-  if (!transcript || transcript.trim().length < 10) {
-    return {
-      name: null,
-      email: null,
-      phone_number: userNumber || null,
-      best_time_to_call: null,
-      summary: ''
-    };
-  }
-
-  const systemPrompt = `You are a data extraction expert. Your task is to extract customer information from call transcripts with 100% accuracy.
-
-EXTRACTION RULES:
-1. NAME: Look for "my name is", "this is", "I am", "call me", or any person's name mentioned. Use proper capitalization.
-2. EMAIL: Search for email addresses in any format (user@domain.com). Convert to lowercase. Validate it has @ and domain.
-3. PHONE: Extract any phone number mentioned. Keep ONLY digits (0-9). Remove +, -, spaces, country codes if present. Look for variations like "nine eight seven..." spelled out.
-4. BEST TIME TO CALL: Only extract if explicitly stated (e.g., "call me tomorrow at 2pm", "next week Monday morning"). Use exact wording from transcript.
-5. SUMMARY: Write ONE clear sentence (max 40 words) describing what the customer wants or the call purpose.
-
-OUTPUT FORMAT - Return ONLY valid JSON, nothing else:
-{"name":"value or null","email":"value or null","phone_number":"value or null","best_time_to_call":"value or null","summary":"value or empty string"}
-
-CRITICAL:
-- Use null (not empty string) for name, email, phone_number, best_time_to_call if not found
-- Use empty string "" for summary if nothing meaningful extracted
-- Return ONLY JSON object, no text before or after
-- Phone numbers must be digits only (e.g., 919876543210 not +91-98765-43210)
-- Email must be lowercase and valid format`;
-
-  const userPrompt = `Extract customer information from this call transcript. Be thorough and extract ALL available information.
-
-TRANSCRIPT:
-${transcript}
-
-Return ONLY the JSON object:`;
-
-  try {
-    const groqInstance = initGroq();
-
-    const completion = await groqInstance.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.05,
-      max_tokens: 200,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
-    });
-
-    const raw = (completion?.choices?.[0]?.message?.content || '').trim();
-    
-    // More robust JSON extraction
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.warn('⚠️  No JSON found, using heuristic fallback');
-      return heuristicFallback(transcript, userNumber);
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (jsonErr) {
-      // Try to fix common JSON issues
-      let fixed = jsonMatch[0]
-        .replace(/[\u2018\u2019]/g, "'")
-        .replace(/[\u201C\u201D]/g, '"')
-        .replace(/,\s*}/g, '}')
-        .replace(/,\s*]/g, ']');
-      try {
-        parsed = JSON.parse(fixed);
-      } catch (e) {
-        console.warn('⚠️  JSON parse failed, using heuristic fallback');
-        return heuristicFallback(transcript, userNumber);
-      }
-    }
-
-    const normalized = validateAndNormalize(parsed, userNumber);
-    return normalized || heuristicFallback(transcript, userNumber);
-  } catch (err) {
-    if (err.status === 429 || err.error?.code === 'rate_limit_exceeded') {
-      if (retries < 3) {
-        const waitTime = Math.pow(2, retries) * 10000;
-        console.warn(`⏳ Rate limited. Retrying in ${waitTime / 1000}s...`);
-        await new Promise(r => setTimeout(r, waitTime));
-        return extractDataWithGroq(transcript, userNumber, retries + 1);
-      }
-    }
-    console.error('❌ Groq error:', err.message);
-    return heuristicFallback(transcript, userNumber);
-  }
+function isLikelyPersonName(name) {
+  if (!name) return false;
+  return !NAME_BLACKLIST.some(w =>
+    name.toLowerCase().includes(w)
+  );
 }
 
-/* -------------------- VALIDATION -------------------- */
+// ------------------ FALLBACK NAME ------------------
+function fallbackExtractName(transcript, email) {
+  if (!transcript) return null;
+  const text = transcript.replace(/\s+/g, ' ');
 
-function validateAndNormalize(obj, userNumber) {
-  if (!obj || typeof obj !== 'object') return null;
-
-  const allowedKeys = ['name', 'email', 'phone_number', 'best_time_to_call', 'summary'];
-  for (const k of Object.keys(obj)) {
-    if (!allowedKeys.includes(k)) return null;
-  }
-
-  let name = (obj.name === null) ? null : String(obj.name).trim();
-  if (name === '') name = null;
-
-  let email = (obj.email === null) ? null : String(obj.email).trim().toLowerCase();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    email = null;
-  }
-
-  let phone = (obj.phone_number === null) ? null : String(obj.phone_number).replace(/\D/g, '');
-  if (phone === '') phone = null;
-
-  if (!phone && userNumber) {
-    const candidate = String(userNumber).replace(/\D/g, '');
-    phone = candidate.length >= 7 ? candidate : null;
-  }
-
-  let bt = (obj.best_time_to_call === null) ? null : String(obj.best_time_to_call).trim();
-  if (bt === '') bt = null;
-
-  let summary = (typeof obj.summary === 'string') ? obj.summary.trim() : '';
-  const words = summary.split(/\s+/).filter(Boolean);
-  if (words.length > 40) summary = words.slice(0, 40).join(' ') + '...';
-
-  return {
-    name: name || null,
-    email: email || null,
-    phone_number: phone || null,
-    best_time_to_call: bt || null,
-    summary: summary || ''
-  };
-}
-
-function heuristicFallback(transcript, userNumber) {
-  // More aggressive extraction when LLM fails
-  transcript = transcript || '';
-
-  // NAME: Look for patterns
-  let name = null;
-  const namePatterns = [
-    /my name is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-    /this is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-    /I'm\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-    /call me\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-    /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:speaking|here)/im
+  const patterns = [
+    /(?:my name is|this is|i am|i'm|name is)\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+){0,2})/i,
+    /^([A-Z][a-z]+(?:\s[A-Z][a-z]+){0,2})\s+(speaking|here)/im,
+    /(?:hi|hello)[, ]+\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+){0,2})/i
   ];
-  for (const pattern of namePatterns) {
-    const match = transcript.match(pattern);
-    if (match) {
-      name = match[1].trim();
-      break;
+
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m && m[1] && isLikelyPersonName(m[1])) {
+      return m[1].trim();
     }
   }
 
-  // EMAIL: Look for @ symbol
-  let email = null;
-  const emailMatch = transcript.match(/([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
-  if (emailMatch) {
-    email = emailMatch[1].toLowerCase();
-  }
-
-  // PHONE: Multiple patterns including spoken numbers
-  let phone = null;
-  const phonePatterns = [
-    /(?:phone|number|call me at|reach me at|my number is)\s*:?\s*(\+?[0-9\s\-()]{7,})/i,
-    /\b(\d{10})\b/,
-    /(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})/
-  ];
-  
-  for (const pattern of phonePatterns) {
-    const match = transcript.match(pattern);
-    if (match) {
-      phone = match[1].replace(/\D/g, '');
-      if (phone.length >= 7) break;
+  // derive from email
+  if (email) {
+    const local = email.split('@')[0];
+    const parts = local.split(/[._-]/).filter(Boolean);
+    if (parts.length) {
+      const candidate = parts
+        .slice(0, 2)
+        .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(' ');
+      if (isLikelyPersonName(candidate)) return candidate;
     }
   }
 
-  // Use userNumber as fallback
-  if (!phone && userNumber) {
-    phone = String(userNumber).replace(/\D/g, '');
-    if (phone.length < 7) phone = null;
-  }
+  return null;
+}
 
-  // BEST TIME TO CALL
-  let bestTime = null;
-  const timePatterns = [
-    /(?:call me|reach me|contact me)\s+(?:on\s+)?([a-z0-9\s:ampm,\-]+)(?:\.|$)/i,
-    /(?:tomorrow|today|next\s+\w+|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:at\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)/i
-  ];
-  
-  for (const pattern of timePatterns) {
-    const match = transcript.match(pattern);
-    if (match) {
-      bestTime = match[1].trim();
-      break;
+// ------------------ FALLBACK SUMMARY ------------------
+function fallbackExtractSummary(transcript) {
+  if (!transcript) return '';
+  const cleaned = transcript.replace(/\s+/g, ' ').trim();
+  const sentences = cleaned.split(/(?<=[.?!])\s+/);
+
+  for (const s of sentences) {
+    const words = s.split(' ');
+    if (words.length >= 6) {
+      return words.slice(0, 40).join(' ').replace(/[.?!]*$/, '');
     }
   }
 
-  // SUMMARY: First meaningful sentence
-  const sentences = transcript.split(/[.!?]+/).filter(s => s.trim().length > 10);
-  let summary = '';
-  if (sentences.length > 0) {
-    summary = sentences[0].trim().substring(0, 240);
-  }
-
-  return {
-    name: name || null,
-    email: email || null,
-    phone_number: phone || null,
-    best_time_to_call: bestTime || null,
-    summary: summary || ''
-  };
+  return cleaned.slice(0, 120);
 }
 
-/* -------------------- SAVE TO DB -------------------- */
+// =======================================================
+// ✅ MAIN PROCESSOR
+// =======================================================
+async function processSingleBolnaCall(call) {
+  await ensureMongo();
 
-async function saveToDB(extractedData, call) {
-  const BolnaCall = getBolnaCallModel();
-
-  const normalizedUserNumber = call.user_number
-    ? String(call.user_number).replace(/^\+?91/, '')
-    : null;
-
-  return await BolnaCall.create({
-    bolna_call_id: call.id || null,
-    name: extractedData.name || null,
-    email: extractedData.email || null,
-    phone_number: extractedData.phone_number || null,
-    best_time_to_call: extractedData.best_time_to_call || null,
-    summary: extractedData.summary || '',
-    transcript: call.transcript || call.output?.transcript || '',
-    call_duration: call.conversation_duration || 0,
-    call_timestamp: call.created_at ? new Date(call.created_at) : new Date(),
-    user_number: normalizedUserNumber,
-    source: 'bolna-ai',
-    whatsapp_status: call.whatsapp_status || call.whatsapp?.status || 'pending',
-    whatsapp_message_id: call.whatsapp_message_id || call.whatsapp?.messageId || null,
-    whatsapp_sent_at: call.whatsapp_sent_at ? new Date(call.whatsapp_sent_at) : null,
-    whatsapp_error: call.whatsapp_error || null
-  });
-}
-
-/* -------------------- CLEANUP -------------------- */
-
-async function cleanupDatabase() {
-  const BolnaCall = getBolnaCallModel();
-  const result = await BolnaCall.deleteMany({});
-  console.log(`🗑️  Deleted ${result.deletedCount} records from database`);
-  return result.deletedCount;
-}
-
-/* -------------------- PROCESS -------------------- */
-
-async function processBolnaCalls() {
-  await connectDB();
-
-  const BolnaCall = getBolnaCallModel();
-
-  console.log('🔍 Database Status:');
-  const beforeCleanup = await BolnaCall.countDocuments();
-  console.log(`📊 Records before cleanup: ${beforeCleanup}`);
-
-  // Clean all records to match Bolna exactly
-  if (process.env.CLEANUP_DAYS === '0' || process.argv.includes('--reset')) {
-    console.log('🔄 CLEANUP: Deleting ALL records to sync fresh...');
-    await BolnaCall.deleteMany({});
-  }
-
-  const afterCleanup = await BolnaCall.countDocuments();
-  console.log(`📊 Records after cleanup: ${afterCleanup}`);
-
-  const calls = await fetchBolnaCalls();
-  if (!Array.isArray(calls) || calls.length === 0) {
-    console.log('⚠️ No calls from Bolna');
-    await mongoose.connection.close();
+  const exists = await Calls.findOne({ bolna_call_id: call.id });
+  if (exists) {
+    console.log('⏭️ Duplicate skipped:', call.id);
     return;
   }
 
-  console.log(`\n📞 Bolna API returned ${calls.length} calls`);
+  const transcript = extractCleanTranscript(call);
 
-  let newCount = 0;
-  let duplicateCount = 0;
-  let whatsappCount = 0;
-  let errorCount = 0;
+  // ---- AI Extraction (STRICT) ----
+  let ai = { name: null, summary: '' };
+  try {
+    ai = await extractNameAndSummary(transcript);
+  } catch (err) {
+    console.warn('⚠️ Groq failed, using fallback');
+  }
 
-  console.log('\n🔄 Processing calls...');
-  for (let idx = 0; idx < calls.length; idx++) {
-    const call = calls[idx];
-    try {
-      const bolnaId = call.id;
+  // ---- Deterministic Fields ----
+  const email = extractEmail(transcript) || null;
+  const phone = extractPhone(transcript) || null;
+  const best_time_to_call = extractBestTime(transcript) || null;
 
-      if (!bolnaId) {
-        console.warn('⚠️ Call missing ID, skipping');
-        errorCount++;
-        continue;
-      }
+  // ---- Name Resolution ----
+  let name = ai?.name?.trim() || null;
 
-      // Check for duplicates
-      const exists = await BolnaCall.findOne({ bolna_call_id: bolnaId });
-
-      if (exists) {
-        duplicateCount++;
-        continue;
-      }
-
-      const phone = call.user_number
-        ? String(call.user_number).replace(/^\+91/, '')
-        : null;
-
-      const transcript = call.transcript || call.output?.transcript || '';
-
-      const extracted = await extractDataWithGroq(transcript, phone);
-      const savedCall = await saveToDB(extracted, call);
-
-      newCount++;
-      console.log(`✅ [${idx + 1}/${calls.length}] Saved: ${bolnaId}`);
-
-      // 📱 SEND WHATSAPP MESSAGE
-      if (extracted.phone_number) {
-        console.log(`📱 Sending WhatsApp to: ${extracted.phone_number}`);
-        
-        const whatsappResult = await sendWhatsAppMessage(
-          extracted.phone_number,
-          extracted
-        );
-
-        if (whatsappResult.success) {
-          await BolnaCall.findByIdAndUpdate(savedCall._id, {
-  whatsapp_status: 'sent',
-  whatsapp_message_id: whatsappResult.data?.request_id || null,
-  whatsapp_sent_at: new Date(),
-  whatsapp_error: null
-});
-          whatsappCount++;
-          console.log(`✅ WhatsApp sent successfully`);
-        } else {
-         await BolnaCall.findByIdAndUpdate(savedCall._id, {
-  whatsapp_status: 'failed',
-  whatsapp_error: JSON.stringify(whatsappResult.error)
-});
-
-        }
-      }
-
-      await new Promise(r => setTimeout(r, 3000));
-
-    } catch (err) {
-      if (err.code === 11000) {
-        duplicateCount++;
-      } else {
-        errorCount++;
-        console.error(`❌ Error: ${err.message}`);
-      }
+  if (!isLikelyPersonName(name)) {
+    const fallback = fallbackExtractName(transcript, email);
+    name = fallback || null;
+    if (name) {
+      console.log(`⚙️ Fallback name used: ${name}`);
     }
   }
 
-  const finalCount = await BolnaCall.countDocuments();
-
-  console.log('\n' + '═'.repeat(50));
-  console.log('✅ SYNC COMPLETE');
-  console.log('═'.repeat(50));
-  console.log(`Bolna API returned:     ${calls.length}`);
-  console.log(`New calls saved:        ${newCount}`);
-  console.log(`WhatsApp messages sent: ${whatsappCount}`);
-  console.log(`Duplicates skipped:     ${duplicateCount}`);
-  console.log(`Errors:                 ${errorCount}`);
-  console.log('─'.repeat(50));
-  console.log(`Database total:         ${finalCount}`);
-  console.log('═'.repeat(50));
-
-  if (finalCount === calls.length) {
-    console.log('\n✅ Perfect! Database matches Bolna API exactly.');
+  // ---- Summary Resolution ----
+  let summary = ai?.summary?.trim() || '';
+  if (!summary) {
+    summary = fallbackExtractSummary(transcript);
   }
 
-  await mongoose.connection.close();
+  // ---- SAVE ----
+  await Calls.create({
+    bolna_call_id: call.id,
+    transcript,
+    name,
+    email,
+    phone_number: phone,
+    best_time_to_call,
+    summary,
+    source: 'bolna',
+    status: call.status,
+    created_at: call.created_at || new Date(),
+  });
+
+  console.log(
+    '✅ Saved:',
+    call.id,
+    '| name:',
+    name || '(null)'
+  );
 }
 
-/* -------------------- RUN -------------------- */
+// NEW: send pending WhatsApp messages for saved calls
+async function sendPendingWhatsAppMessages({ limit = 20 } = {}) {
+  await ensureMongo();
 
-if (process.argv[2] === '--reset') {
-  connectDB()
-    .then(async () => {
-      const BolnaCall = getBolnaCallModel();
-      const result = await BolnaCall.deleteMany({});
-      console.log(`🗑️  Reset: Deleted ${result.deletedCount} records`);
-      await mongoose.connection.close();
-      process.exit(0);
-    })
-    .catch(err => {
-      console.error(err);
-      process.exit(1);
-    });
-} else {
-  processBolnaCalls()
-    .then(() => process.exit(0))
-    .catch(err => {
-      console.error(err);
-      process.exit(1);
-    });
+  const pending = await Calls.find({
+    phone_number: { $exists: true, $ne: null, $ne: '' },
+    whatsapp_status: { $in: ['pending', 'not_sent'] }
+  }).limit(limit);
+
+  console.log(`🔔 sendPendingWhatsAppMessages: found ${pending.length} pending messages`);
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const c of pending) {
+    const phone = String(c.phone_number).replace(/\D/g, '');
+    if (!phone || phone.length < 7) {
+      console.warn(`⚠️ Invalid phone for call ${c._id}:`, c.phone_number);
+      await Calls.findByIdAndUpdate(c._id, { whatsapp_status: 'failed', whatsapp_error: 'invalid phone' });
+      failed++;
+      continue;
+    }
+
+    try {
+      const payload = {
+        name: c.name || '',
+        summary: c.summary || '',
+        best_time_to_call: c.best_time_to_call || '',
+        email: c.email || '',
+        phone_number: phone
+      };
+
+      console.log(`📱 Sending WhatsApp to ${phone} for call ${c._id}`);
+      const result = await sendWhatsAppMessage(phone, payload);
+
+      if (result && result.success) {
+        const messageId = result.messageId || result.data?.request_id || null;
+        await Calls.findByIdAndUpdate(c._id, {
+          whatsapp_status: 'sent',
+          whatsapp_message_id: messageId,
+          whatsapp_sent_at: new Date(),
+          whatsapp_error: null
+        });
+        sent++;
+        console.log(`✅ WhatsApp sent for call ${c._id}`);
+      } else {
+        await Calls.findByIdAndUpdate(c._id, {
+          whatsapp_status: 'failed',
+          whatsapp_error: JSON.stringify(result?.error || 'unknown')
+        });
+        failed++;
+        console.warn(`❌ WhatsApp failed for call ${c._id}:`, result?.error || 'unknown');
+      }
+    } catch (err) {
+      await Calls.findByIdAndUpdate(c._id, {
+        whatsapp_status: 'failed',
+        whatsapp_error: err?.message || String(err)
+      });
+      failed++;
+      console.error(`❌ Exception sending WhatsApp for call ${c._id}:`, err?.message || err);
+    }
+
+    // small delay to avoid rate limits
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  return { sent, failed, total: pending.length };
 }
 
-module.exports = {
-  processBolnaCalls,
-  extractDataWithGroq,
-  fetchBolnaCalls
-};
+// ------------------
+module.exports = { processSingleBolnaCall, sendPendingWhatsAppMessages };
