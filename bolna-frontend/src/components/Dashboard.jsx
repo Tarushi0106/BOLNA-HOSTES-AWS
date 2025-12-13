@@ -4,11 +4,25 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import shaurrya_logo from "../assets/shaurrya_logo.png";
 
+/* ---------------- API BASE ---------------- */
 const API_BASE =
   window.location.hostname === "localhost"
     ? "http://localhost:5001"
     : "http://13.53.90.157";
 
+/* ---------------- DATE FORMATTER ---------------- */
+const formatDateTime = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 const Dashboard = () => {
   const [calls, setCalls] = useState([]);
@@ -24,22 +38,23 @@ const Dashboard = () => {
     fetchCalls();
   }, []);
 
- const normalizeCalls = (data) => {
-  const arr = Array.isArray(data) ? data : [];
-  return arr.map((c) => ({
-    _id: c._id,
-    name: c.name || "N/A",
-    phone_number: c.phone_number || "N/A",   // extracted phone
-    user_number: c.user_number || "N/A",     // 🔥 Bolna caller
-    email: c.email || "N/A",
-    best_time_to_call: c.best_time_to_call || "N/A",
-    whatsapp_status: c.whatsapp_status || "pending",
-    summary: c.summary || "—",
-    createdAt: c.createdAt,
-  }));
-};
+  /* ---------------- NORMALIZE DATA ---------------- */
+  const normalizeCalls = (data) => {
+    const arr = Array.isArray(data) ? data : [];
+    return arr.map((c) => ({
+      _id: c._id,
+      name: c.name || "N/A",
+      phone_number: c.phone_number || "N/A",
+      user_number: c.user_number || "N/A", // Bolna number
+      email: c.email || "N/A",
+      best_time_to_call: c.best_time_to_call || "N/A",
+      whatsapp_status: c.whatsapp_status || "pending",
+      summary: c.summary || "—",
+      createdAt: c.createdAt, // 🔥 MongoDB date
+    }));
+  };
 
-
+  /* ---------------- FETCH CALLS ---------------- */
   const fetchCalls = async () => {
     try {
       setLoading(true);
@@ -49,15 +64,19 @@ const Dashboard = () => {
         timeout: 10000,
       });
 
-     const normalized = normalizeCalls(res.data);
+      const normalized = normalizeCalls(res.data);
 
-// 🔥 show ONLY sent & failed
-const filtered = normalized.filter(
-  (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
-);
+      // show ONLY sent & failed
+      const filtered = normalized.filter(
+        (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
+      );
 
-setCalls(filtered);
+      // 🔥 latest first
+      filtered.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
 
+      setCalls(filtered);
     } catch (err) {
       console.error("❌ Failed to load calls:", err);
       setError("Failed to load calls from backend");
@@ -66,12 +85,14 @@ setCalls(filtered);
     }
   };
 
+  /* ---------------- LOGOUT ---------------- */
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/", { replace: true });
   };
 
+  /* ---------------- LOADING ---------------- */
   if (loading)
     return (
       <div className="loading-container">
@@ -82,14 +103,11 @@ setCalls(filtered);
 
   return (
     <div className="dashboard-layout">
-      {/* NAVBAR */}
+      {/* ---------------- NAVBAR ---------------- */}
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-brand">
             <img src={shaurrya_logo} alt="logo" className="navbar-logo" />
-            <div className="brand-block">
-             
-            </div>
           </div>
 
           <div className="navbar-center">
@@ -108,7 +126,7 @@ setCalls(filtered);
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
+      {/* ---------------- CONTENT ---------------- */}
       <main className="content">
         <header className="page-header">
           <div>
@@ -127,20 +145,19 @@ setCalls(filtered);
             >
               📄 Lead Dashboard
             </button>
-           <button
-  className="btn-message-logs"
-  onClick={() => navigate("/dashboard/messageLogs")}
->
-  🧾 Message Logs
-</button>
 
-
+            <button
+              className="btn-message-logs"
+              onClick={() => navigate("/dashboard/messageLogs")}
+            >
+              🧾 Message Logs
+            </button>
           </div>
         </header>
 
         {error && <div className="error-box">⚠️ {error}</div>}
 
-        {/* KPI CARDS */}
+        {/* ---------------- KPI CARDS ---------------- */}
         <section className="stats-grid">
           <div className="stat-card">
             <h4>Total Calls</h4>
@@ -163,7 +180,7 @@ setCalls(filtered);
           </div>
         </section>
 
-        {/* TABLE */}
+        {/* ---------------- TABLE ---------------- */}
         <section className="table-section">
           <h2>Recent Calls ({calls.length})</h2>
 
@@ -173,10 +190,10 @@ setCalls(filtered);
                 <th>#</th>
                 <th>Name</th>
                 <th>Bolna Phone no.</th>
-
                 <th>User Phone no.</th>
                 <th>Email</th>
                 <th>Best Time</th>
+                <th>Date & Time</th> {/* 🔥 NEW */}
                 <th>Status</th>
                 <th>Summary</th>
               </tr>
@@ -187,12 +204,14 @@ setCalls(filtered);
                 <tr key={c._id || i}>
                   <td>{i + 1}</td>
                   <td>{c.name}</td>
-                  
-                 <td>{c.user_number}</td>
-<td>{c.phone_number}</td>
-
+                  <td>{c.user_number}</td>
+                  <td>{c.phone_number}</td>
                   <td>{c.email}</td>
                   <td>{c.best_time_to_call}</td>
+
+                  {/* 🔥 MongoDB Date */}
+                  <td>{formatDateTime(c.createdAt)}</td>
+
                   <td>
                     {c.whatsapp_status === "sent"
                       ? "✅ Sent"
@@ -200,6 +219,7 @@ setCalls(filtered);
                       ? "❌ Failed"
                       : "⏳ Pending"}
                   </td>
+
                   <td>
                     {c.summary.length > 60
                       ? c.summary.slice(0, 60) + "…"
