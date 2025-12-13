@@ -57,6 +57,7 @@ app.use('/api/forms', require('./routes/form'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/calls', require('./routes/calls'));
 app.use('/api/msg-logs', require('./routes/whatsappLogs'));
+app.use('/api', require('./routes/msg91Webhook'));
 
 
 /* -------------------- DASHBOARD STATS -------------------- */
