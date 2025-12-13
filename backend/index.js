@@ -1,6 +1,3 @@
-/***********************
- * backend/index.js
- ***********************/
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -13,12 +10,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// sanitize accidental trailing whitespace/newlines
+app.use((req, res, next) => {
+  if (typeof req.url === 'string') req.url = req.url.replace(/[\s\r\n]+$/g, '');
+  if (typeof req.originalUrl === 'string') req.originalUrl = req.originalUrl.replace(/[\s\r\n]+$/g, '');
+  next();
+});
+
+// request logging
 app.use((req, res, next) => {
   console.log(`➡️ ${req.method} ${req.originalUrl}`);
   next();
 });
 
-/* -------------------- MODELS (LOAD ONCE) -------------------- */
+/* -------------------- MODELS -------------------- */
 const BolnaCall = require('./models/Calls');
 
 /* -------------------- MONGODB -------------------- */
@@ -27,14 +32,11 @@ mongoose
   .then(() => {
     console.log('✅ MongoDB Connected');
 
-    // ✅ Start Bolna polling AFTER DB ready
+    // Start Bolna polling AFTER DB ready
+    // require service lazily (it will use process.env etc)
     const { fetchBolnaCalls } = require('./services/fetchBolnaCalls');
-
-    fetchBolnaCalls(); // run once on boot
-
-    setInterval(() => {
-      fetchBolnaCalls();
-    }, 60 * 1000);
+    fetchBolnaCalls(); // run once at boot
+    setInterval(fetchBolnaCalls, 60 * 1000);
   })
   .catch(err => {
     console.error('❌ MongoDB error:', err.message);
@@ -42,22 +44,25 @@ mongoose
   });
 
 /* -------------------- ROUTES -------------------- */
-const authRoutes = require('./routes/auth');
-const callsRoutes = require('./routes/calls');
-
-app.use('/api/auth', authRoutes);
-app.use('/api/calls', callsRoutes);
+/*
+  IMPORTANT:
+  Your router file lives at ./routes/form.js (singular).
+  We mount it at /api/form so all routes inside become /api/form/...
+*/
+// app.post('/api/conversation/test', (req, res) => {
+//   console.log('🧪 TEST ENDPOINT HIT');
+//   res.json({ success: true, body: req.body });
+// });
+app.use('/api/forms', require('./routes/form'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/calls', require('./routes/calls'));
 
 /* -------------------- DASHBOARD STATS -------------------- */
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const total = await BolnaCall.countDocuments();
-    const withEmail = await BolnaCall.countDocuments({
-      email: { $exists: true, $ne: '' }
-    });
-    const withPhone = await BolnaCall.countDocuments({
-      phone_number: { $exists: true, $ne: '' }
-    });
+    const withEmail = await BolnaCall.countDocuments({ email: { $exists: true, $ne: '' } });
+    const withPhone = await BolnaCall.countDocuments({ phone_number: { $exists: true, $ne: '' } });
 
     res.json({
       success: true,
@@ -73,46 +78,24 @@ app.get('/api/dashboard/stats', async (req, res) => {
   }
 });
 
-/* -------------------- HEALTH -------------------- */
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend working ✅' });
+/* -------------------- HEALTH & API ROOT -------------------- */
+app.get('/', (req, res) => {
+  res.json({ message: 'Backend root — try /api/form/list-names or /api/test' });
 });
+app.get('/api/test', (req, res) => res.json({ message: 'Backend working ✅' }));
 
-/* -------------------- 404 -------------------- */
+/* -------------------- DEBUG route (temporary) -------------------- */
+app.get('/debug', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+/* -------------------- GLOBAL 404 (MUST BE LAST) -------------------- */
 app.use((req, res) => {
-  res.status(404).json({ message: 'Endpoint not found' });
+  res.status(404).json({ message: 'Endpoint not found', path: req.originalUrl, method: req.method });
 });
 
-/* -------------------- WHATSAPP SCHEDULER -------------------- */
-const { sendPendingWhatsAppMessages } = require('./services/bolnaService');
 
-// Run once at startup (non-blocking)
-(async () => {
-  try {
-    console.log('🔁 Running pending WhatsApp send once at startup...');
-    const res = await sendPendingWhatsAppMessages({ limit: 50 });
-    console.log('🔁 Startup WhatsApp run result:', res);
-  } catch (err) {
-    console.error('🔴 Startup WhatsApp run failed:', err?.message || err);
-  }
-})();
 
-// Schedule job every 5 minutes
-cron.schedule('* * * * *', async () => {
-  try {
-    console.log('⏰ Cron: sendPendingWhatsAppMessages starting...');
-    const result = await sendPendingWhatsAppMessages({ limit: 50 });
-    console.log('⏰ Cron: sendPendingWhatsAppMessages completed:', result);
-  } catch (err) {
-    console.error('⏰ Cron error sending WhatsApp:', err?.message || err);
-  }
-}, {
-  scheduled: true,
-  timezone: process.env.CRON_TIMEZONE || 'UTC'
-});
-
-/* -------------------- SERVER -------------------- */
-const PORT = 5001;
+/* -------------------- SERVER (single instance) -------------------- */
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend running on http://localhost:${PORT}`);
 });

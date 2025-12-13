@@ -1,5 +1,5 @@
 const axios = require('axios');
-const Calls = require('../models/Calls');
+require('dotenv').config();
 
 const BOLNA_AGENT_ID = process.env.BOLNA_AGENT_ID;
 const BOLNA_API_KEY = process.env.BOLNA_API_KEY;
@@ -18,55 +18,39 @@ async function fetchBolnaCalls() {
       },
     });
 
-    // ✅ CORRECT EXTRACTION (KEY FIX)
     const calls =
-      res.data?.data?.executions ||   // ✅ main case
-      res.data?.data ||               // fallback
-      res.data ||                     // fallback
+      res.data?.data?.executions ||
+      res.data?.data ||
+      res.data ||
       [];
 
-    console.log('✅ Raw records:', Array.isArray(calls) ? calls.length : typeof calls);
+    console.log(
+      '✅ Raw records:',
+      Array.isArray(calls) ? calls.length : typeof calls
+    );
 
     if (!Array.isArray(calls)) {
-      console.error('❌ Bolna response shape unexpected:', res.data);
+      console.error('❌ Unexpected Bolna response:', res.data);
       return;
     }
+
+    const { processSingleBolnaCall } = require('./bolnaService');
 
     let processed = 0;
     let skipped = 0;
 
     for (const call of calls) {
-      // ✅ Only completed calls
       if (call.status !== 'completed') {
         skipped++;
         continue;
       }
 
-      const exists = await Calls.findOne({ bolna_call_id: call.id });
-      if (exists) {
-        skipped++;
-        continue;
-      }
-
-      const transcript =
-        call.transcript ||
-        call.conversation?.transcript ||
-        '';
-
-      await Calls.create({
-        bolna_call_id: call.id,
-        transcript,
-        source: 'bolna',
-        summary: '',
-        whatsapp_status: 'pending',
-        createdAt: new Date(call.created_at || Date.now())
-      });
-
+      await processSingleBolnaCall(call);
       processed++;
     }
 
     console.log(
-      `✅ Bolna sync completed — Processed: ${processed}, Skipped: ${skipped}, Total: ${calls.length}`
+      `✅ Bolna sync done | Processed: ${processed}, Skipped: ${skipped}, Total: ${calls.length}`
     );
   } catch (err) {
     console.error(
@@ -74,6 +58,18 @@ async function fetchBolnaCalls() {
       err.response?.data || err.message
     );
   }
+}
+if (require.main === module) {
+  require('dotenv').config();
+  fetchBolnaCalls()
+    .then(() => {
+      console.log('✅ fetchBolnaCalls finished');
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('❌ fetchBolnaCalls crashed:', err);
+      process.exit(1);
+    });
 }
 
 module.exports = { fetchBolnaCalls };

@@ -1,25 +1,166 @@
-:root {
-  --bg-darker: #020617;
-  --bg-card: #1e293b;
-  --text: #f1f5f9;
-  --text-muted: #cbd5e1;
-  --primary: #3b82f6;
-  --primary-dark: #1d4ed8;
-  --border: #334155;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background-color: var(--bg-darker);
-  color: var(--text);
-}
-
-#root {
+/* ===============================
+   PAGE WRAPPER
+================================ */
+.form-container {
   min-height: 100vh;
+  background: #f5f6f8;
+  display: flex;
+  justify-content: center;
+  padding: 64px 20px;
+}
+
+/* ===============================
+   FORM CARD
+================================ */
+form {
+  width: 100%;
+  max-width: 1100px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 42px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* ===============================
+   TITLE
+================================ */
+h2 {
+  color: #c62828;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.form-subtitle {
+  color: #4b5563;
+  font-size: 13px;
+  margin-bottom: 40px;
+}
+
+/* ===============================
+   SECTION HEADERS
+================================ */
+.section-title {
+  margin-top: 50px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  border-left: 4px solid #c62828;
+  padding-left: 12px;
+}
+
+/* ===============================
+   FORM GRID
+================================ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.form-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 900px) {
+  .form-grid,
+  .form-grid.three {
+    grid-template-columns: 1fr;
+  }
+
+  form {
+    padding: 28px;
+  }
+}
+
+/* ===============================
+   FIELD BLOCK
+================================ */
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===============================
+   LABELS
+================================ */
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+/* ===============================
+   INPUTS
+================================ */
+input,
+textarea,
+select {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* focus */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #c62828;
+  box-shadow: 0 0 0 2px rgba(198,40,40,0.15);
+}
+
+/* ===============================
+   PRODUCTS / SERVICES BOX
+================================ */
+.service-box {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* ===============================
+   BUTTON
+================================ */
+button[type="submit"] {
+  margin-top: 50px;
+  width: 100%;
+  background: #c62828;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(198,40,40,0.3);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

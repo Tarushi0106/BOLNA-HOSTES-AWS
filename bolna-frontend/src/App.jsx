@@ -1,18 +1,30 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation
+} from 'react-router-dom';
+
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import Form from './components/Form';
+import LeadDashboard from "./components/LeadDashboard"; 
+import LeadList from "./components/LeadList";
+
 import './App.css';
+
+
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
-  
   if (!token) {
     return <Navigate to="/" replace />;
   }
-  
   return children;
 }
 
@@ -21,7 +33,6 @@ function AppContent() {
   const location = useLocation();
   const token = localStorage.getItem('token');
 
-  // Redirect authenticated users away from login/signup
   useEffect(() => {
     if (token && (location.pathname === '/' || location.pathname === '/signup')) {
       navigate('/dashboard', { replace: true });
@@ -30,11 +41,16 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* PUBLIC ROUTES */}
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* Protected Routes */}
+      {/* ✅ PUBLIC LEAD FORM (WHATSAPP) */}
+      <Route path="/lead-form/:callId" element={<Form />} />
+
+  <Route path="/dashboard/lead/:id" element={<LeadDashboard />} />
+
+
       <Route
         path="/dashboard"
         element={
@@ -43,6 +59,7 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/calls"
         element={
@@ -51,8 +68,9 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
+      <Route path="/dashboard/leads" element={<LeadList />} />
 
-      {/* Catch all - redirect to home */}
+      {/* fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
