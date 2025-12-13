@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';   // ✅ useEffect added
 import './form.css';
+import axios from 'axios';                            // ✅ axios added
+import { useParams } from 'react-router-dom';         // ✅ useParams added
 
 const Form = () => {
+  const { callId } = useParams();
+
+
   const [formData, setFormData] = useState({
 
-    // 🔹 PERSONAL INFORMATION (NEW)
+    // 🔹 PERSONAL INFORMATION (UNCHANGED)
     personName: "",
     personPhone: "",
     personEmail: "",
@@ -52,24 +57,52 @@ const Form = () => {
     // Current Discussion Thread
     currentDiscussion: ''
   });
+const params = useParams();
+console.log("PARAMS:", params);
+
+  // 🔥 ONLY ADDITION: PREFILL PERSONAL INFO
+useEffect(() => {
+  if (!callId) {
+    console.log("❌ callId missing");
+    return;
+  }
+
+  console.log("✅ callId from URL:", callId);
+
+  axios
+    .get(`http://127.0.0.1:5001/api/forms/${callId}`)
+    .then(res => {
+      console.log("✅ API RESPONSE:", res.data);
+
+      const c = res.data.data;
+
+      setFormData(prev => ({
+        ...prev,
+        personName: c.name || "",
+        personPhone: c.phone_number || "",
+        personEmail: c.email || ""
+      }));
+    })
+    .catch(err => {
+      console.error("❌ Prefill failed:", err);
+    });
+}, [callId]);
+
+
+
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const keys = name.split('.');
     
     if (keys.length === 1) {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     } 
     else if (keys.length === 2) {
       setFormData(prev => ({
         ...prev,
-        [keys[0]]: {
-          ...prev[keys[0]],
-          [keys[1]]: value
-        }
+        [keys[0]]: { ...prev[keys[0]], [keys[1]]: value }
       }));
     } 
     else if (keys.length === 3) {

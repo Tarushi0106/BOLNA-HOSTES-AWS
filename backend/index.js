@@ -56,6 +56,8 @@ mongoose
 app.use('/api/forms', require('./routes/form'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/calls', require('./routes/calls'));
+app.use('/api/msg-logs', require('./routes/whatsappLogs'));
+
 
 /* -------------------- DASHBOARD STATS -------------------- */
 app.get('/api/dashboard/stats', async (req, res) => {
@@ -99,3 +101,15 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend running on http://localhost:${PORT}`);
 });
+
+
+const { processBolnaCalls } = require('./services/bolnaService');
+
+// 🔁 AUTO-RUN BOLNA → WHATSAPP PIPELINE EVERY 30 SECONDS
+setInterval(async () => {
+  try {
+    await processBolnaCalls();
+  } catch (err) {
+    console.error('❌ processBolnaCalls failed:', err.message);
+  }
+}, 30 * 1000);

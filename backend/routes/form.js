@@ -90,22 +90,22 @@ router.get("/", async (req, res) => {
 /* -------------------------------------------------------
    GET /api/forms/:id (full form details)
 -------------------------------------------------------- */
+
 router.get("/:id", async (req, res) => {
   try {
-    const form = await LeadForm.findById(req.params.id);
+    const call = await Calls.findById(req.params.id).lean();
 
-    if (!form) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Form not found" });
+    if (!call) {
+      return res.status(404).json({ success: false, message: "Call not found" });
     }
 
-    return res.json({ success: true, data: form });
+    res.json({ success: true, data: call });
   } catch (err) {
-    console.error("GET /api/forms/:id error:", err);
-    return res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
 
 /* -------------------------------------------------------
    GET /api/forms/by-call/:callId

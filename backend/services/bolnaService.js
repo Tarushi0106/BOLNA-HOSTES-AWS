@@ -167,20 +167,24 @@ if (summary && best_time_to_call) {
   if (phone) {
     console.log('📤 Sending immediate WhatsApp for call:', call.id);
     try {
-      const res = await sendWhatsAppMessage(phone, name || 'Customer', call.id);
-      await Calls.findByIdAndUpdate(savedCall._id, {
-        whatsapp_status: res?.success ? 'sent' : 'failed',
-        whatsapp_sent_at: new Date(),
-        whatsapp_message_id: res?.messageId || null
-      });
+     const res = await sendWhatsAppMessage(phone, name || 'Customer', call.id);
+
+// 🔥 If MSG91 accepted request → mark as SENT
+await Calls.findByIdAndUpdate(savedCall._id, {
+  whatsapp_status: 'sent',
+  whatsapp_sent_at: new Date(),
+  whatsapp_message_id: res?.messageId || null,
+  whatsapp_error: null
+});
+
       console.log('✅ Immediate WhatsApp sent for call:', call.id);
     } catch (e) {
-      console.error('❌ Immediate WhatsApp failed for call:', call.id, e.message);
-      await Calls.findByIdAndUpdate(savedCall._id, {
-        whatsapp_status: 'failed',
-        whatsapp_error: e.message
-      });
-    }
+  await Calls.findByIdAndUpdate(savedCall._id, {
+    whatsapp_status: 'failed',
+    whatsapp_error: e.message || 'MSG91 send error'
+  });
+}
+
   } else {
     console.log('⚠️ No phone number for call:', call.id, '- skipping WhatsApp');
   }

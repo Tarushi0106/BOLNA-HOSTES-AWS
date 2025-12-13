@@ -1,0 +1,71 @@
+.msglogs-container {
+  padding: 24px;
+}
+
+.msglogs-container h2 {
+  color: #d32f2f;
+  margin-bottom: 16px;
+}
+
+.msglogs-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.msglogs-table th,
+.msglogs-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 14px;
+}
+
+.msglogs-table th {
+  background: #fafafa;
+  color: #b71c1c;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status.queued {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status.received {
+  background: #d4edda;
+  color: #155724;
+}
+
+.reason {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty {
+  text-align: center;
+  color: #888;
+}
+
+.msg-loading {
+  padding: 24px;
+}
+
+.msg-error {
+  padding: 24px;
+  color: red;
+}

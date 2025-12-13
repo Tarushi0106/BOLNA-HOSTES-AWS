@@ -14,6 +14,8 @@ import Signup from './components/Signup';
 import Form from './components/Form';
 import LeadDashboard from "./components/LeadDashboard"; 
 import LeadList from "./components/LeadList";
+import MessageLogs from "./components/MessageLogs";
+
 
 import './App.css';
 
@@ -49,6 +51,7 @@ function AppContent() {
       <Route path="/lead-form/:callId" element={<Form />} />
 
   <Route path="/dashboard/lead/:id" element={<LeadDashboard />} />
+<Route path="/dashboard/messageLogs" element={<MessageLogs />} />
 
 
       <Route

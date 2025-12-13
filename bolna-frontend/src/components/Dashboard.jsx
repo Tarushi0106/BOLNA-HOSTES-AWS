@@ -24,19 +24,21 @@ const Dashboard = () => {
     fetchCalls();
   }, []);
 
-  const normalizeCalls = (data) => {
-    const arr = Array.isArray(data) ? data : [];
-    return arr.map((c) => ({
-      _id: c._id,
-      name: c.name || "N/A",
-      phone_number: c.phone_number || "N/A",
-      email: c.email || "N/A",
-      best_time_to_call: c.best_time_to_call || "N/A",
-      whatsapp_status: c.whatsapp_status || "pending",
-      summary: c.summary || "—",
-      createdAt: c.createdAt,
-    }));
-  };
+ const normalizeCalls = (data) => {
+  const arr = Array.isArray(data) ? data : [];
+  return arr.map((c) => ({
+    _id: c._id,
+    name: c.name || "N/A",
+    phone_number: c.phone_number || "N/A",   // extracted phone
+    user_number: c.user_number || "N/A",     // 🔥 Bolna caller
+    email: c.email || "N/A",
+    best_time_to_call: c.best_time_to_call || "N/A",
+    whatsapp_status: c.whatsapp_status || "pending",
+    summary: c.summary || "—",
+    createdAt: c.createdAt,
+  }));
+};
+
 
   const fetchCalls = async () => {
     try {
@@ -47,7 +49,15 @@ const Dashboard = () => {
         timeout: 10000,
       });
 
-      setCalls(normalizeCalls(res.data));
+     const normalized = normalizeCalls(res.data);
+
+// 🔥 show ONLY sent & failed
+const filtered = normalized.filter(
+  (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
+);
+
+setCalls(filtered);
+
     } catch (err) {
       console.error("❌ Failed to load calls:", err);
       setError("Failed to load calls from backend");
@@ -117,6 +127,14 @@ const Dashboard = () => {
             >
               📄 Lead Dashboard
             </button>
+           <button
+  className="btn-message-logs"
+  onClick={() => navigate("/dashboard/messageLogs")}
+>
+  🧾 Message Logs
+</button>
+
+
           </div>
         </header>
 
@@ -154,10 +172,12 @@ const Dashboard = () => {
               <tr>
                 <th>#</th>
                 <th>Name</th>
-                <th>Phone</th>
+                <th>Bolna Phone no.</th>
+
+                <th>User Phone no.</th>
                 <th>Email</th>
                 <th>Best Time</th>
-                <th>WhatsApp</th>
+                <th>Status</th>
                 <th>Summary</th>
               </tr>
             </thead>
@@ -167,7 +187,10 @@ const Dashboard = () => {
                 <tr key={c._id || i}>
                   <td>{i + 1}</td>
                   <td>{c.name}</td>
-                  <td>{c.phone_number}</td>
+                  
+                 <td>{c.user_number}</td>
+<td>{c.phone_number}</td>
+
                   <td>{c.email}</td>
                   <td>{c.best_time_to_call}</td>
                   <td>

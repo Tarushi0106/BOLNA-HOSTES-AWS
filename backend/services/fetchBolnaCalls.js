@@ -11,12 +11,26 @@ async function fetchBolnaCalls() {
     console.log('🔄 Fetching from Bolna');
     console.log('🌐 URL:', BOLNA_URL);
 
-    const res = await axios.get(BOLNA_URL, {
-      headers: {
-        Authorization: `Bearer ${BOLNA_API_KEY}`,
-        Accept: 'application/json',
-      },
-    });
+ const res = await axios.get(BOLNA_URL, {
+  headers: {
+    Authorization: `Bearer ${BOLNA_API_KEY}`,
+    Accept: 'application/json',
+  },
+  params: {
+    include_raw: true,   // 🔥 THIS IS THE KEY
+  }
+});
+
+async function fetchExecutionRaw(executionId) {
+  const url = `https://api.bolna.ai/agent/executions/${executionId}`;
+  const res = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${BOLNA_API_KEY}`,
+      Accept: 'application/json',
+    },
+  });
+  return res.data;
+}
 
     const calls =
       res.data?.data?.executions ||
@@ -38,16 +52,32 @@ async function fetchBolnaCalls() {
 
     let processed = 0;
     let skipped = 0;
+for (const call of calls) {
+  if (call.status !== 'completed') {
+    skipped++;
+    continue;
+  }
 
-    for (const call of calls) {
-      if (call.status !== 'completed') {
-        skipped++;
-        continue;
-      }
+  // 🔥 FETCH RAW EXECUTION DATA (THIS CONTAINS USER NUMBER)
+  try {
+    const rawRes = await fetchExecutionRaw(call.id);
 
-      await processSingleBolnaCall(call);
-      processed++;
-    }
+    // Attach raw safely so bolnaService can read it
+    call.__raw = rawRes?.raw || rawRes || null;
+
+    console.log(
+      '📞 Raw user number:',
+      call.__raw?.from || call.__raw?.caller || 'N/A'
+    );
+  } catch (e) {
+    console.warn('⚠️ Failed to fetch raw for:', call.id);
+    call.__raw = null;
+  }
+
+  await processSingleBolnaCall(call);
+  processed++;
+}
+
 
     console.log(
       `✅ Bolna sync done | Processed: ${processed}, Skipped: ${skipped}, Total: ${calls.length}`
