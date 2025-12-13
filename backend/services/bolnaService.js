@@ -48,17 +48,20 @@ async function ensureMongo() {
 function extractCleanTranscript(call) {
   if (call?.transcript?.trim()) return call.transcript.trim();
 
-  if (!call?.conversation?.turns) return '';
+  if (!Array.isArray(call?.conversation?.turns)) return '';
 
   return call.conversation.turns
     .map(t => {
-      if (!Array.isArray(t.turn_latency)) return '';
+      if (!Array.isArray(t?.turn_latency) || t.turn_latency.length === 0) {
+        return '';
+      }
       const last = t.turn_latency[t.turn_latency.length - 1];
       return last?.text || '';
     })
     .filter(Boolean)
     .join('\n');
 }
+
 
 // ------------------ NAME FILTER ------------------
 const NAME_BLACKLIST = [
