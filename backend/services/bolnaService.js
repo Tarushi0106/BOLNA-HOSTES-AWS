@@ -234,13 +234,20 @@ async function processBolnaCalls() {
   console.log('🔄 processBolnaCalls started');
   await ensureMongo();
 
-  const calls = await fetchBolnaCalls();
-  console.log('📥 Fetched', calls.length, 'calls from Bolna API');
+const calls = await fetchBolnaCalls();
 
-  if (!calls || calls.length === 0) {
-    console.log('⚠️ No calls to process');
-    return;
-  }
+if (!Array.isArray(calls)) {
+  console.warn('⚠️ fetchBolnaCalls returned invalid data:', calls);
+  return;
+}
+
+console.log('📥 Fetched', calls.length, 'calls from Bolna API');
+
+if (calls.length === 0) {
+  console.log('⚠️ No calls to process');
+  return;
+}
+
 
   for (const call of calls) {
     try {
