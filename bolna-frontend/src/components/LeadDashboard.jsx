@@ -75,37 +75,38 @@ useEffect(() => {
     try {
       setLoading(true);
 
-      const API_BASE =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-          ? "http://localhost:5001"
-          : "http://13.53.90.157:5001";
-
       const res = await axios.get(
         `${API_BASE}/api/forms/prefill/${id}`
       );
 
-      const f = res.data?.data;
-      if (!f) {
-        setError("Data not found");
-        return;
-      }
+      const f = res.data?.data || {};
 
       setFormData(prev => ({
         ...prev,
-
-        // 🔹 Personal info from BolnaCalls
         personName: f.personName || "",
         personPhone: f.personPhone || "",
         personEmail: f.personEmail || "",
 
-        // 🔹 Rest of form (if exists)
-        ...f,
+        businessEntityName: f.businessEntityName || "",
+        state: f.state || "",
+        accountManager: f.accountManager || "",
+        hoAddress: f.hoAddress || "",
+        ceoName: f.ceoName || "",
+        ceoEmail: f.ceoEmail || "",
+        circleContactNo: f.circleContactNo || "",
+        panIndiaLocations: f.panIndiaLocations || "",
+        totalEmployees: f.totalEmployees || "",
+        annualTurnover: f.annualTurnover || "",
+        currentTelecomSpend: f.currentTelecomSpend || "",
+        currentDataSpend: f.currentDataSpend || "",
+
         services: f.services || prev.services,
         infrastructure: f.infrastructure || prev.infrastructure,
         keyPerson1: f.keyPerson1 || prev.keyPerson1,
         keyPerson2: f.keyPerson2 || prev.keyPerson2,
-        keyPerson3: f.keyPerson3 || prev.keyPerson3
+        keyPerson3: f.keyPerson3 || prev.keyPerson3,
+
+        currentDiscussion: f.currentDiscussion || ""
       }));
 
       setError(null);
@@ -119,6 +120,8 @@ useEffect(() => {
 
   loadForm();
 }, [id]);
+
+
 
 
 
