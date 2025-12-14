@@ -110,10 +110,10 @@ app.listen(PORT, '0.0.0.0', () => {
 const { processBolnaCalls } = require('./services/bolnaService');
 
 // 🔁 AUTO-RUN BOLNA → WHATSAPP PIPELINE EVERY 30 SECONDS
-setInterval(async () => {
-  try {
-    await processBolnaCalls();
-  } catch (err) {
-    console.error('❌ processBolnaCalls failed:', err.message);
-  }
-}, 30 * 1000);
+// setInterval(async () => {
+//   try {
+//     await processBolnaCalls();
+//   } catch (err) {
+//     console.error('❌ processBolnaCalls failed:', err.message);
+//   }
+// }, 30 * 1000);

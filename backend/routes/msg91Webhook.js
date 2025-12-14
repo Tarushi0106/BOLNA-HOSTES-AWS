@@ -53,17 +53,19 @@ const Calls = require('../models/Calls');
 //     res.sendStatus(200);
 //   }
 // });
-router.post('/webhook', async (req, res) => {
-  try {
-    console.log('🔥🔥 MSG91 HIT WEBHOOK 🔥🔥');
-    console.log(JSON.stringify(req.body, null, 2));
+const fs = require('fs');
 
-    res.status(200).send('OK'); // ✅ REQUIRED
-  } catch (err) {
-    console.error('❌ MSG91 WEBHOOK ERROR:', err.message);
-    res.status(200).send('OK');
-  }
+router.post('/webhook', async (req, res) => {
+  fs.appendFileSync(
+    '/tmp/msg91.log',
+    JSON.stringify(req.body) + '\n'
+  );
+
+  console.log('🔥 MSG91 WEBHOOK HIT');
+
+  res.status(200).send('OK');
 });
+
 
 
 module.exports = router;
