@@ -53,11 +53,12 @@ mongoose
 //   console.log('🧪 TEST ENDPOINT HIT');
 //   res.json({ success: true, body: req.body });
 // });
+app.use(express.json({ strict: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use('/api/forms', require('./routes/form'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/calls', require('./routes/calls'));
-app.use(express.json({ strict: false }));
-app.use(express.urlencoded({ extended: true }));
+
 
 app.use('/api/msg91', require('./routes/msg91Webhook'));
 

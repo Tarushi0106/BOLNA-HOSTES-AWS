@@ -4,7 +4,9 @@ const router = express.Router();
 const Calls = require('../models/msgpayload'); // or Calls.js (same model)
 
 router.post('/webhook', async (req, res) => {
-     console.log('🔥 MSG91 WEBHOOK BODY:', req.body);
+   console.log('🔥 RAW WEBHOOK BODY:', JSON.stringify(req.body, null, 2));
+console.log('🔎 SEARCHING FOR requestId:', requestId);
+
   try {
     const payload = req.body;
 
@@ -28,15 +30,23 @@ router.post('/webhook', async (req, res) => {
 
     if (!requestId) return res.sendStatus(200);
 
-   await Calls.findOneAndUpdate(
-  { whatsapp_message_id: requestId },
-  {
-    whatsapp_status: status.toLowerCase(),
-    whatsapp_error: reason,
-    whatsapp_delivery_payload: payload
-  },
-  { new: true }
-);
+const existing = await Calls.findOne({
+  whatsapp_message_id: requestId
+});
+
+if (!existing) {
+  console.error('❌ NO RECORD FOUND FOR:', requestId);
+  return res.sendStatus(200);
+}
+
+existing.whatsapp_status = status.toLowerCase();
+existing.whatsapp_error = reason;
+existing.whatsapp_delivery_payload = payload;
+
+await existing.save();
+
+console.log('✅ DB UPDATED:', existing.whatsapp_status, existing.whatsapp_error);
+
 
 if (!updated) {
   console.error('❌ No DB record found for requestId:', requestId);
