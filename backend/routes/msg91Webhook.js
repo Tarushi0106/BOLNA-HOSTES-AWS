@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Calls = require('../models/Calls');
 
-router.post('/msg91/webhook', async (req, res) => {
+router.post('/webhook', async (req, res) => {
+
   try {
     const payload = req.body;
 
