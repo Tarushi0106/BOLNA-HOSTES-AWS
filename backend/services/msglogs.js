@@ -1,45 +1,46 @@
-/**
- * Extracts a clean, human-readable error message from MSG91 response
- * Matches MSG91 "Reason" shown on dashboard
- * @param {any} err - axios error object
- * @returns {string}
- */
-function extractMsg91Error(err) {
-  if (!err) return 'Unknown MSG91 error';
+const axios = require('axios');
+const Calls = require('../models/msgpayload');
+const { extractMsg91Error } = require('./msg91Utils');
 
-  const data = err.response?.data;
+const MSG91_URL = 'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/';
+const MSG91_KEY = process.env.MSG91_API_KEY;
 
-  // 1️⃣ MSG91 auth / immediate failures (most common)
-  if (data?.errors && typeof data.errors === 'string') {
-    return data.errors;
-  }
+async function sendWhatsApp({ phone, templatePayload }) {
+  const requestId = `msg91-${Date.now()}`;
 
-  // 2️⃣ MSG91 sometimes sends message instead of errors
-  if (data?.message && typeof data.message === 'string') {
-    return data.message;
-  }
+  // 1️⃣ CREATE DB RECORD FIRST
+  await Calls.create({
+    phone_number: phone,
+    whatsapp_message_id: requestId,
+    whatsapp_status: 'sent'
+  });
 
-  // 3️⃣ MSG91 async response text (rare but exists)
-  if (data?.data && typeof data.data === 'string') {
-    return data.data;
-  }
-
-  // 4️⃣ Array-based errors (edge cases)
-  if (Array.isArray(data?.errors) && data.errors.length > 0) {
-    return data.errors.join(', ');
-  }
-
-  // 5️⃣ Axios-level error fallback
-  if (typeof err.message === 'string') {
-    return err.message;
-  }
-
-  // 6️⃣ Absolute fallback (never crashes)
   try {
-    return JSON.stringify(data);
-  } catch {
-    return 'MSG91 error (unparseable)';
+    await axios.post(MSG91_URL, {
+      request_id: requestId,
+      ...templatePayload
+    }, {
+      headers: {
+        authkey: MSG91_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return { success: true, requestId };
+
+  } catch (err) {
+    const reason = extractMsg91Error(err);
+
+    await Calls.findOneAndUpdate(
+      { whatsapp_message_id: requestId },
+      {
+        whatsapp_status: 'failed',
+        whatsapp_error: reason
+      }
+    );
+
+    return { success: false, reason };
   }
 }
 
-module.exports = { extractMsg91Error };
+module.exports = { sendWhatsApp };

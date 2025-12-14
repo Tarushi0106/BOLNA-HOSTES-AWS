@@ -1,71 +1,84 @@
+
 const express = require('express');
 const router = express.Router();
-const Calls = require('../models/Calls');
-
-// router.post('/webhook', async (req, res) => {
-
-//   try {
-//     const payload = req.body;
-
-//     // ✅ Accept all known formats
-//     const requestId =
-//       payload.request_id ||
-//       payload.requestId ||
-//       payload.oneApiRequestId ||
-//       payload.messageId;
-
-//     const status =
-//       payload.status ||
-//       payload.event ||
-//       payload.deliveryStatus ||
-//       'unknown';
-
-//     const reason =
-//       payload.reason ||
-//       payload.error ||
-//       payload.errorMessage ||
-//       payload.failureReason ||
-//       null;
-
-//     if (!requestId) {
-//       console.warn('⚠️ MSG91 webhook without requestId:', payload);
-//       return res.sendStatus(200);
-//     }
-
-//     await Calls.findOneAndUpdate(
-//       { whatsapp_message_id: requestId },
-//       {
-//         whatsapp_status: status.toLowerCase(),
-//         whatsapp_error: reason,
-//         whatsapp_delivery_payload: payload,
-//         whatsapp_delivered_at:
-//           status.toLowerCase() === 'delivered'
-//             ? new Date()
-//             : undefined
-//       }
-//     );
-
-//     console.log('📩 MSG91 WEBHOOK:', requestId, status, reason);
-//     res.sendStatus(200);
-
-//   } catch (err) {
-//     console.error('❌ MSG91 WEBHOOK ERROR:', err.message);
-//     res.sendStatus(200);
-//   }
-// });
-const fs = require('fs');
+const Calls = require('../models/msgpayload'); // or Calls.js (same model)
 
 router.post('/webhook', async (req, res) => {
-  fs.appendFileSync(
-    '/tmp/msg91.log',
-    JSON.stringify(req.body) + '\n'
-  );
+     console.log('🔥 MSG91 WEBHOOK BODY:', req.body);
+  try {
+    const payload = req.body;
 
-  console.log('🔥 MSG91 WEBHOOK HIT');
+    const requestId =
+      payload.request_id ||
+      payload.requestId ||
+      payload.messageId;
 
-  res.status(200).send('OK');
+    const status =
+      payload.status ||
+      payload.event ||
+      payload.deliveryStatus ||
+      'unknown';
+
+    const reason =
+      payload.reason ||
+      payload.error ||
+      payload.errorMessage ||
+      payload.failureReason ||
+      null;
+
+    if (!requestId) return res.sendStatus(200);
+
+   await Calls.findOneAndUpdate(
+  { whatsapp_message_id: requestId },
+  {
+    whatsapp_status: status.toLowerCase(),
+    whatsapp_error: reason,
+    whatsapp_delivery_payload: payload
+  },
+  { new: true }
+);
+
+if (!updated) {
+  console.error('❌ No DB record found for requestId:', requestId);
+} else {
+  console.log('✅ DB UPDATED:', updated.whatsapp_status, updated.whatsapp_error);
+}
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(200);
+  }
 });
 
+/* ✅ DEBUG FETCH ROUTE */
+router.get('/debug/whatsapp/:requestId', async (req, res) => {
+  const data = await Calls.findOne({
+    whatsapp_message_id: req.params.requestId
+  });
 
+  if (!data) {
+    return res.status(404).json({
+      message: 'No record found for this requestId'
+    });
+  }
+
+  res.json({
+    whatsapp_status: data.whatsapp_status,
+    whatsapp_error: data.whatsapp_error,
+    raw_payload: data.whatsapp_delivery_payload
+  });
+});
+router.post('/debug/create-call', async (req, res) => {
+  const { requestId } = req.body;
+
+  const call = await Calls.create({
+    phone_number: '9999999999',
+    whatsapp_message_id: requestId,
+    whatsapp_status: 'sent'
+  });
+
+  res.json(call);
+});
 
 module.exports = router;
