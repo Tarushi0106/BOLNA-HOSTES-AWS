@@ -35,6 +35,6 @@ const LeadFormSchema = new mongoose.Schema({
   keyPerson3: KeyPersonSchema,
 
   currentDiscussion: String,
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 module.exports = mongoose.models.LeadForm || mongoose.model('LeadForm', LeadFormSchema);

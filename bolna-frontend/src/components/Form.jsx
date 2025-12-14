@@ -57,36 +57,84 @@ const Form = () => {
     // Current Discussion Thread
     currentDiscussion: ''
   });
-const params = useParams();
-console.log("PARAMS:", params);
 
-  // 🔥 ONLY ADDITION: PREFILL PERSONAL INFO
-useEffect(() => {
-  if (!callId) {
-    console.log("❌ callId missing");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const params = useParams();
+  console.log("PARAMS:", params);
+
+  // 🔥 PREFILL: Load existing LeadForm if available, otherwise prefill personal info from call
+  useEffect(() => {
+    const loadFormData = async () => {
+      setLoading(true);
+      setError(null);
+
+      if (!callId) {
+        console.log("❌ callId missing");
+        setLoading(false);
+        return;
+      }
+
+      console.log("✅ callId from URL:", callId);
+
+      try {
+        // First, try to fetch existing forms by callId
+        const formsRes = await axios.get(`http://13.53.90.157:5001/api/forms/by-call/${callId}`);
+        const existingForms = formsRes.data.data;
+
+        if (existingForms && existingForms.length > 0) {
+          // Load the latest existing form
+          const latestForm = existingForms[0];
+          console.log("✅ Loading existing form:", latestForm);
+          setFormData(prev => ({
+            ...prev,
+            ...latestForm,
+            services: latestForm.services || prev.services,
+            infrastructure: latestForm.infrastructure || prev.infrastructure,
+            keyPerson1: latestForm.keyPerson1 || prev.keyPerson1,
+            keyPerson2: latestForm.keyPerson2 || prev.keyPerson2,
+            keyPerson3: latestForm.keyPerson3 || prev.keyPerson3,
+          }));
+        } else {
+          // No existing form, prefill personal info from call
+          console.log("✅ No existing form, prefilling personal info");
+         try {
+  const callRes = await axios.get(
+    `http://13.53.90.157:5001/api/forms/by-call/${callId}`
+  );
+
+  const forms = callRes.data.data;
+
+  if (!forms || forms.length === 0) {
+    console.log("ℹ️ No form yet, nothing to prefill");
     return;
   }
 
-  console.log("✅ callId from URL:", callId);
+  const c = forms[0];
 
-  axios
-    .get(`http://127.0.0.1:5001/api/forms/${callId}`)
-    .then(res => {
-      console.log("✅ API RESPONSE:", res.data);
+  setFormData(prev => ({
+    ...prev,
+    personName: c.personName || "",
+    personPhone: c.personPhone || "",
+    personEmail: c.personEmail || "",
+  }));
 
-      const c = res.data.data;
+} catch (callErr) {
+  console.error("❌ Call data fetch failed:", callErr);
+  setError("Could not load call data. Please enter details manually.");
+}
 
-      setFormData(prev => ({
-        ...prev,
-        personName: c.name || "",
-        personPhone: c.phone_number || "",
-        personEmail: c.email || ""
-      }));
-    })
-    .catch(err => {
-      console.error("❌ Prefill failed:", err);
-    });
-}, [callId]);
+        }
+      } catch (err) {
+        console.error("❌ Error loading form data:", err);
+        setError("Could not load form data. Proceeding with blank form.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFormData();
+  }, [callId]);
 
 
 
@@ -122,12 +170,27 @@ useEffect(() => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form Data:', formData);
+    // TODO: POST to backend to save the form
     alert('Form submitted! Check console for data.');
   };
 
   return (
     <div className="form-container">
-      <form onSubmit={handleSubmit}>
+    
+
+      {loading && <p style={{ textAlign: 'center', color: '#666' }}>Loading form data...</p>}
+      {error && <div style={{ 
+        background: '#fff3cd', 
+        color: '#856404', 
+        padding: '12px', 
+        borderRadius: '6px', 
+        marginBottom: '20px',
+        textAlign: 'center'
+      }}>⚠️ {error}</div>}
+
+      {!loading && (
+        <form onSubmit={handleSubmit}>
+
 
         {/* Header */}
         <div className="form-header">
@@ -433,13 +496,36 @@ useEffect(() => {
             </div>
 
             {/* Other Services */}
-            {['Smart CCTV as a Service', 'WiFi as a Service', 'SD-WAN', 'Cyber Security Services'].map((service) => (
-              <div className="service-row" key={service}>
-                <div className="service-name">{service}</div>
+            {[
+              { label: 'Smart CCTV as a Service', key: 'smartCCTV' },
+              { label: 'WiFi as a Service', key: 'wifiAsService' },
+              { label: 'SD-WAN', key: 'sdWAN' },
+              { label: 'Cyber Security Services', key: 'cyberSecurity' }
+            ].map(({ label, key }) => (
+              <div className="service-row" key={key}>
+                <div className="service-name">{label}</div>
                 <div className="sites-inputs">
-                  <input type="text" placeholder="Site 1" />
-                  <input type="text" placeholder="Site 2" />
-                  <input type="text" placeholder="Site 3" />
+                  <input
+                    type="text"
+                    placeholder="Site 1"
+                    name={`services.${key}.site1`}
+                    value={formData.services[key].site1}
+                    onChange={handleInputChange}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Site 2"
+                    name={`services.${key}.site2`}
+                    value={formData.services[key].site2}
+                    onChange={handleInputChange}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Site 3"
+                    name={`services.${key}.site3`}
+                    value={formData.services[key].site3}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
             ))}
@@ -593,6 +679,7 @@ useEffect(() => {
         </div>
 
       </form>
+      )}
     </div>
   );
 };

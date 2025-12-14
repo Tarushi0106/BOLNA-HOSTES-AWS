@@ -254,3 +254,21 @@ body {
 .btn-message-logs:active {
   transform: scale(0.97);
 }
+/* ================= FIX LONG PAGE SCROLL ================= */
+
+.dashboard-layout {
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* navbar is sticky, content must scroll */
+.content {
+  flex: 1;
+  min-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 30px 50px 200px 50px;
+}
