@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const BolnaUserNo = require("../models/bolnauserno");
 
-router.post("/webhook", async (req, res) => {
+// 🔔 Webhook called by Bolna function
+router.post("/bolna/webhook", async (req, res) => {
   try {
     const { execution_id, customer_number } = req.body;
 
@@ -10,36 +11,39 @@ router.post("/webhook", async (req, res) => {
       return res.status(400).json({ message: "Missing data" });
     }
 
-    // avoid duplicates
     await BolnaUserNo.updateOne(
       { executionId: execution_id },
-      {
-        executionId: execution_id,
-        userNumber: customer_number
-      },
+      { $set: { userNumber: customer_number } },
       { upsert: true }
     );
 
-    console.log("✅ Saved Bolna call:", execution_id, customer_number);
+    console.log("📞 Caller captured:", execution_id, customer_number);
 
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Bolna webhook error:", err);
+    console.error("❌ Webhook error:", err);
     res.status(500).json({ success: false });
   }
 });
-// routes/bolnaUserNo.js
+
+// 🔍 Fetch caller number by executionId
 router.get("/:executionId", async (req, res) => {
-  const doc = await BolnaUserNo.findOne({
-    executionId: req.params.executionId
-  });
+  try {
+    const doc = await BolnaUserNo.findOne({
+      executionId: req.params.executionId
+    });
 
-  if (!doc) return res.status(404).json({ message: "Not found" });
+    if (!doc) {
+      return res.status(404).json({ message: "Not found" });
+    }
 
-  res.json({
-    executionId: doc.executionId,
-    userNumber: doc.userNumber
-  });
+    res.json({
+      executionId: doc.executionId,
+      userNumber: doc.userNumber
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;
