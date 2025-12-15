@@ -1,68 +1,38 @@
+// routes/bolnaWebhook.js
 const express = require("express");
 const router = express.Router();
 const BolnaUserNo = require("../models/bolnauserno");
 
-/**
- * 🔔 BOLNA ANALYTICS WEBHOOK
- * This receives FULL execution payload
- */
-router.post("/bolna/webhook", async (req, res) => {
+router.post("/webhook", async (req, res) => {
   try {
-    console.log("🔥 BOLNA WEBHOOK HIT 🔥");
-    console.log(JSON.stringify(req.body, null, 2));
+    const { execution_id, customer_number } = req.body;
 
-    const executionId = req.body.execution_id;
-    const telephony = req.body.telephony_data || {};
-
-    // 🧠 Detect caller correctly
-    let userNumber = null;
-
-    if (telephony.direction === "inbound") {
-      userNumber = telephony.from_number;
-    } else if (telephony.direction === "outbound") {
-      userNumber = telephony.to_number;
-    }
-
-    if (!executionId || !userNumber) {
-      console.warn("⚠️ Missing executionId or userNumber");
-      return res.sendStatus(200); // IMPORTANT: do not fail webhook
+    if (!execution_id || !customer_number) {
+      return res.status(400).json({ message: "Missing data" });
     }
 
     await BolnaUserNo.updateOne(
-      { executionId },
-      { $set: { userNumber } },
+      { executionId: execution_id },
+      { $set: { userNumber: customer_number } },
       { upsert: true }
     );
 
-    console.log("✅ USER NUMBER SAVED:", executionId, userNumber);
-
-    res.sendStatus(200);
+    console.log("📞 Caller captured:", execution_id, customer_number);
+    res.json({ success: true });
   } catch (err) {
-    console.error("❌ WEBHOOK ERROR:", err);
-    res.sendStatus(500);
+    console.error("❌ Webhook error:", err);
+    res.status(500).json({ success: false });
   }
 });
 
-/**
- * 🔍 Fetch user number by executionId
- */
-router.get("/bolna-user/:executionId", async (req, res) => {
-  try {
-    const doc = await BolnaUserNo.findOne({
-      executionId: req.params.executionId
-    });
+router.get("/:executionId", async (req, res) => {
+  const doc = await BolnaUserNo.findOne({
+    executionId: req.params.executionId
+  });
 
-    if (!doc) {
-      return res.status(404).json({ message: "Not found" });
-    }
+  if (!doc) return res.status(404).json({ message: "Not found" });
 
-    res.json({
-      executionId: doc.executionId,
-      userNumber: doc.userNumber
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
+  res.json(doc);
 });
 
 module.exports = router;
