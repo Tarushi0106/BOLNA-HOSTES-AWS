@@ -71,13 +71,7 @@ async function extractBolnaUserNumbers() {
       err.response?.data || err.message
     );
   }
-  if (require.main === module) {
-  require("../index"); // ensures DB connection
-  setTimeout(() => {
-    extractBolnaUserNumbers();
-  }, 3000);
-}
-
+  
 }
 
 module.exports = extractBolnaUserNumbers;
