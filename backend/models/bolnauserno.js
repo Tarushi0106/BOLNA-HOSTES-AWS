@@ -1,23 +1,12 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const bolnaUserNoSchema = new mongoose.Schema(
-  {
-    executionId: {
-      type: String,
-      unique: true,
-      sparse: true
-    },
-    userNumber: {
-      type: String,
-      required: true,
-      index: true
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  },
-  { timestamps: true }
-);
+const BolnaUserNoSchema = new mongoose.Schema({
+  executionId: { type: String, index: true },
 
-module.exports = mongoose.model('BolnaUserNo', bolnaUserNoSchema);
+  // 📞 USER NUMBER (CALLER)
+  userNumber: { type: String, required: true },
+
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model("BolnaUserNo", BolnaUserNoSchema);

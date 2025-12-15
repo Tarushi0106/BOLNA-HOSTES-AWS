@@ -49,8 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/forms', require('./routes/form'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/calls', require('./routes/calls'));
-const bolnaUserNoRoutes = require("./routes/bolna_user_no");
-app.use("/api", bolnaUserNoRoutes);
+app.use("/api/bolna-user", require("./routes/bolnaWebhook"));
 
 app.use('/api/msg91', require('./routes/msg91Webhook'));
 
