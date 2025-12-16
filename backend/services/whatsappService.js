@@ -2,7 +2,7 @@
 console.log('🚀 REACHING MSG91 API');
 
 const axios = require('axios');
-const Calls = require('../models/msgpayload');   // 🔥 ADD THIS LINE
+const Calls = require('../models/Msg91WebhookLog');   // 🔥 ADD THIS LINE
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const MSG91_API_KEY = process.env.MSG91_API_KEY;

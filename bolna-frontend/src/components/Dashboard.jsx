@@ -146,12 +146,12 @@ const Dashboard = () => {
               📄 Lead Dashboard
             </button>
 
-            <button
+            {/* <button
               className="btn-message-logs"
               onClick={() => navigate("/dashboard/messageLogs")}
             >
               🧾 Message Logs
-            </button>
+            </button> */}
           </div>
         </header>
 

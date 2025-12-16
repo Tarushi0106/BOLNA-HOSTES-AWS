@@ -1,38 +1,40 @@
-// routes/bolnaWebhook.js
 const express = require("express");
 const router = express.Router();
-const BolnaUserNo = require("../models/bolnauserno");
 
-router.post("/webhook", async (req, res) => {
-  try {
-    const { execution_id, customer_number } = req.body;
+// TEMP storage (memory)
+let lastRaw = null;
 
-    if (!execution_id || !customer_number) {
-      return res.status(400).json({ message: "Missing data" });
-    }
+router.post("/webhook", (req, res) => {
+  lastRaw = req.body;
 
-    await BolnaUserNo.updateOne(
-      { executionId: execution_id },
-      { $set: { userNumber: customer_number } },
-      { upsert: true }
-    );
-
-    console.log("📞 Caller captured:", execution_id, customer_number);
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Webhook error:", err);
-    res.status(500).json({ success: false });
-  }
+  console.log("✅ Bolna webhook received");
+  res.status(200).json({ success: true });
 });
 
-router.get("/:executionId", async (req, res) => {
-  const doc = await BolnaUserNo.findOne({
-    executionId: req.params.executionId
+// 🔍 GET endpoint to VIEW extracted RAW data
+router.get("/debug", (req, res) => {
+  if (!lastRaw) {
+    return res.status(404).json({
+      message: "No webhook data received yet"
+    });
+  }
+
+  const fromNumber =
+    lastRaw.user_number ||
+    lastRaw.telephony_data?.from_number ||
+    null;
+
+  const toNumber =
+    lastRaw.agent_number ||
+    lastRaw.telephony_data?.to_number ||
+    null;
+
+  res.json({
+    executionId: lastRaw.id || null,
+    from: fromNumber,
+    to: toNumber,
+    transcript: lastRaw.transcript || null
   });
-
-  if (!doc) return res.status(404).json({ message: "Not found" });
-
-  res.json(doc);
 });
 
 module.exports = router;

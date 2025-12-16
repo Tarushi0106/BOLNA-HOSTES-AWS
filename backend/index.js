@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
 require('dotenv').config();
+const msg91LogsRoutes = require("./routes/msg91Logs");
 
 const app = express();
 
@@ -49,10 +50,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/forms', require('./routes/form'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/calls', require('./routes/calls'));
-app.use('/api/bolna-webhook', require('./routes/bolnaWebhook'));
+app.use(
+  express.json({ limit: "10mb" }) // IMPORTANT
+);
+
+app.use("/api/bolna-webhook", require("./routes/bolnaWebhook"));
 
 
-app.use('/api/msg91', require('./routes/msg91Webhook'));
+
+app.use("/api/msg91/logs", msg91LogsRoutes);
+app.use("/api/msg91/reason", require("./routes/msg91Reason"));
+
+app.use("/api/msg91", require("./routes/msg91Logs"));
+
+
 
 
 /* -------------------- DASHBOARD STATS -------------------- */
@@ -87,8 +98,13 @@ app.get('/debug', (req, res) => res.json({ ok: true, time: new Date().toISOStrin
 
 /* -------------------- GLOBAL 404 (MUST BE LAST) -------------------- */
 app.use((req, res) => {
-  res.status(404).json({ message: 'Endpoint not found', path: req.originalUrl, method: req.method });
+  res.status(404).json({
+    message: "Endpoint not found",
+    path: req.originalUrl,
+    method: req.method
+  });
 });
+
 
 
 
