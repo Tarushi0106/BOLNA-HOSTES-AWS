@@ -6,9 +6,10 @@ import shaurrya_logo from "../assets/shaurrya_logo.png";
 
 /* ---------------- API BASE ---------------- */
 const API_BASE =
-  window.location.hostname === "localhost"
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
     ? "http://localhost:5001"
-    : "http://13.53.90.157";
+    : "http://13.53.90.157:5001";
 
 /* ---------------- DATE FORMATTER ---------------- */
 const formatDateTime = (iso) => {
@@ -37,53 +38,120 @@ const Dashboard = () => {
     if (storedUser) setUser(JSON.parse(storedUser));
     fetchCalls();
   }, []);
+// 🔄 Auto refresh every 30 seconds
+useEffect(() => {
+  const interval = setInterval(() => {
+    fetchCalls();
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, []);
 
   /* ---------------- NORMALIZE DATA ---------------- */
-  const normalizeCalls = (data) => {
-    const arr = Array.isArray(data) ? data : [];
-    return arr.map((c) => ({
-      _id: c._id,
-      name: c.name || "N/A",
-      phone_number: c.phone_number || "N/A",
-      user_number: c.user_number || "N/A", // Bolna number
-      email: c.email || "N/A",
-      best_time_to_call: c.best_time_to_call || "N/A",
-      whatsapp_status: c.whatsapp_status || "pending",
-      summary: c.summary || "—",
-      createdAt: c.createdAt, // 🔥 MongoDB date
-    }));
-  };
+const normalizeCalls = (data) => {
+  const arr = Array.isArray(data) ? data : [];
+  return arr.map((c) => ({
+    _id: c._id,
+    name: c.name || "N/A",
+
+    // ✅ USER FILLED NUMBER (lead form)
+    phone_number: c.phone_number || "N/A",
+
+    // ✅ BOLNA FROM NUMBER
+    bolna_from_number:
+      c.fromNumber ||
+      c.user_number ||   // fallback if backend sends old field
+      "N/A",
+
+    email: c.email || "N/A",
+    best_time_to_call: c.best_time_to_call || "N/A",
+    whatsapp_status: c.whatsapp_status || "pending",
+    summary: c.summary || "—",
+    createdAt: c.createdAt,
+  }));
+};
+
 
   /* ---------------- FETCH CALLS ---------------- */
-  const fetchCalls = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+const fetchCalls = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const res = await axios.get(`${API_BASE}/api/calls`, {
-        timeout: 10000,
-      });
+    const [callsRes, bolnaRes] = await Promise.all([
+      axios.get(`${API_BASE}/api/calls`),
+      axios.get(`${API_BASE}/api/bolna/calls`),
+    ]);
 
-      const normalized = normalizeCalls(res.data);
+    const callsData = Array.isArray(callsRes.data) ? callsRes.data : [];
+    const bolnaData = Array.isArray(bolnaRes.data?.data)
+      ? bolnaRes.data.data
+      : [];
 
-      // show ONLY sent & failed
-      const filtered = normalized.filter(
+    // Map bolna by executionId
+    const bolnaMap = {};
+    bolnaData.forEach((b) => {
+      bolnaMap[b.executionId] = b;
+    });
+
+    // 1️⃣ Calls coming from /api/calls
+    const mergedFromCalls = callsData.map((c) => {
+      const execId = c.bolna_call_id || c.executionId;
+      const bolna = bolnaMap[execId];
+
+      return {
+        _id: c._id,
+        name: c.name || "N/A",
+        phone_number: c.phone_number || "N/A",
+        bolna_from_number: bolna?.fromNumber || c.from_number || "N/A",
+        email: c.email || "N/A",
+        best_time_to_call: c.best_time_to_call || "N/A",
+        whatsapp_status: c.whatsapp_status || "failed",
+        summary: c.summary || "—",
+        createdAt: c.createdAt,
+      };
+    });
+
+    // 2️⃣ Bolna-only FAILED calls (not present in calls collection)
+    const bolnaOnlyFailed = bolnaData
+      .filter(
+        (b) =>
+          !callsData.some(
+            (c) =>
+              c.bolna_call_id === b.executionId ||
+              c.executionId === b.executionId
+          )
+      )
+      .map((b) => ({
+        _id: b._id,
+        name: "N/A",
+        phone_number: "N/A",
+        bolna_from_number: b.fromNumber || "N/A",
+        email: "N/A",
+        best_time_to_call: "N/A",
+        whatsapp_status: "failed",
+        summary: "Call failed before lead capture",
+        createdAt: b.createdAt,
+      }));
+
+    // 3️⃣ Combine both
+    const finalData = [...mergedFromCalls, ...bolnaOnlyFailed]
+      .filter(
         (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
-      );
+      )
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      // 🔥 latest first
-      filtered.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
+    setCalls(finalData);
+  } catch (err) {
+    console.error("❌ Failed to load calls:", err);
+    setError("Failed to load calls");
+  } finally {
+    setLoading(false);
+  }
+};
 
-      setCalls(filtered);
-    } catch (err) {
-      console.error("❌ Failed to load calls:", err);
-      setError("Failed to load calls from backend");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
 
   /* ---------------- LOGOUT ---------------- */
   const handleLogout = () => {
@@ -204,13 +272,15 @@ const Dashboard = () => {
                 <tr key={c._id || i}>
                   <td>{i + 1}</td>
                   <td>{c.name}</td>
-                  <td>{c.user_number}</td>
-                  <td>{c.phone_number}</td>
+               <td>{c.bolna_from_number}</td>
+<td>{c.phone_number}</td>
+
                   <td>{c.email}</td>
                   <td>{c.best_time_to_call}</td>
 
                   {/* 🔥 MongoDB Date */}
-                  <td>{formatDateTime(c.createdAt)}</td>
+                  <td>{formatDateTime(c.call_timestamp || c.createdAt)
+}</td>
 
                   <td>
                     {c.whatsapp_status === "sent"

@@ -5,11 +5,11 @@ const Msg91WebhookLogSchema = new mongoose.Schema({
   customerNumber: String,
   templateName: String,
 
-  status: {
-    type: String,
-    enum: ["SUCCESS", "FAILED"],
-    required: true
-  },
+status: {
+  type: String,
+}
+
+,
 
   errorCode: String,
   errorReason: String,

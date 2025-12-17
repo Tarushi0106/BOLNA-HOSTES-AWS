@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
 require('dotenv').config();
-const msg91LogsRoutes = require("./routes/msg91Logs");
+
 
 const app = express();
 
@@ -54,14 +54,11 @@ app.use(
   express.json({ limit: "10mb" }) // IMPORTANT
 );
 
-app.use("/api/bolna-webhook", require("./routes/bolnaWebhook"));
+app.use("/api/bolna", require("./routes/bolnaWebhook"));
 
 
 
-app.use("/api/msg91/logs", msg91LogsRoutes);
-app.use("/api/msg91/reason", require("./routes/msg91Reason"));
 
-app.use("/api/msg91", require("./routes/msg91Logs"));
 
 
 
