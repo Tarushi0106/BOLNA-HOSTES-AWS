@@ -15,10 +15,8 @@ router.get("/list-names", async (req, res) => {
       .lean();
 
     return res.json({
-      
       success: true,
       data: docs.map(f => ({
-        
         id: String(f._id),
         displayName: f.personName || "Unnamed Lead",
         phone: f.personPhone || "",
@@ -32,9 +30,11 @@ router.get("/list-names", async (req, res) => {
   }
 });
 
+
+
 /* =======================================================
    GET /api/forms/prefill/:id
-   🔥 AUTO-DETECT callId OR formId
+    AUTO-DETECT callId OR formId
 ======================================================= */
 router.get("/prefill/:id", async (req, res) => {
   try {
@@ -47,13 +47,13 @@ router.get("/prefill/:id", async (req, res) => {
     let call = null;
     let form = null;
 
-    // 1️⃣ Try as CALL ID
+    // 1 Try as CALL ID
     call = await Calls.findById(id).lean();
     if (call) {
       form = await LeadForm.findOne({ bolnaCallId: call._id }).lean();
     }
 
-    // 2️⃣ If not call → try as FORM ID
+    // 2 If not call  try as FORM ID
     if (!call) {
       form = await LeadForm.findById(id).lean();
       if (!form) {
@@ -65,7 +65,7 @@ router.get("/prefill/:id", async (req, res) => {
     return res.json({
       success: true,
       data: {
-           bolnaCallId: call?._id || null,
+        bolnaCallId: call?._id || null,
         // FROM CALL
         personName: call?.name || "",
         personPhone: call?.phone_number || "",
@@ -84,27 +84,60 @@ router.get("/prefill/:id", async (req, res) => {
 
 /* =======================================================
    POST /api/forms/:callId
-   🔥 UPSERT (SAVE / UPDATE)
+    UPSERT (SAVE / UPDATE)
 ======================================================= */
 router.post("/:callId", async (req, res) => {
   try {
     const { callId } = req.params;
 
-    const call = await Calls.findById(callId);
-    if (!call) {
-      return res.status(404).json({ success: false, message: "Bolna call not found" });
+    console.log(" POST /api/forms/:callId");
+    console.log("CallID:", callId);
+    console.log("Payload keys:", Object.keys(req.body));
+
+    // Validate callId format
+    if (!mongoose.Types.ObjectId.isValid(callId)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Invalid Call ID format" 
+      });
     }
 
+    // Find the call
+    const call = await Calls.findById(callId);
+    if (!call) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "Bolna call not found" 
+      });
+    }
+
+    console.log(" Found call:", call._id);
+
+    // Remove bolnaCallId from payload to avoid conflicts
+    const updateData = { ...req.body };
+    delete updateData.bolnaCallId;
+
+    // Update or create form
     const form = await LeadForm.findOneAndUpdate(
       { bolnaCallId: call._id },
-      { ...req.body, bolnaCallId: call._id },
-      { new: true, upsert: true }
+      { ...updateData, bolnaCallId: call._id },
+      { new: true, upsert: true, runValidators: false }
     );
 
-    return res.json({ success: true, data: form });
+    console.log(" Form saved to DB:", form._id);
+
+    return res.json({ 
+      success: true, 
+      data: form,
+      message: "Form saved successfully"
+    });
 
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error(" POST /api/forms error:", err);
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message || "Internal server error"
+    });
   }
 });
 

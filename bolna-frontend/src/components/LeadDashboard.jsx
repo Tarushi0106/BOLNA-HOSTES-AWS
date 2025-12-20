@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import './form.css';
 import axios from 'axios';
 
@@ -10,13 +10,13 @@ const API_BASE =
     : "http://13.53.90.157:5001";
 
 const Form = () => {
-  const { id } = useParams(); // ✅ objectId / callId from URL
+  const { id } = useParams(); // âœ… objectId / callId from URL
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
   bolnaCallId: null, 
-    // 🔹 PERSONAL INFORMATION
+    // ðŸ”¹ PERSONAL INFORMATION
     personName: "",
     personPhone: "",
     personEmail: "",
@@ -66,7 +66,7 @@ const [error, setError] = useState(null);
   });
 
   /* ======================================================
-     🔥 PREFILL PERSONAL INFO USING URL :id
+     ðŸ”¥ PREFILL PERSONAL INFO USING URL :id
      ====================================================== */
 useEffect(() => {
   if (!id) return;
@@ -161,22 +161,39 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
-    if (!formData.bolnaCallId) {
-      alert("Missing Bolna Call ID");
+    const callId = id; // Use URL param
+
+    if (!callId) {
+      alert("Missing Call ID from URL");
       return;
     }
 
+    console.log("📤 Submitting form for Call ID:", callId);
+    console.log(" Form data:", formData);
+
+    const payload = {
+      ...formData,
+      bolnaCallId: callId
+    };
+
     const res = await axios.post(
-      `${API_BASE}/api/forms/${formData.bolnaCallId}`,
-      formData
+      `${API_BASE}/api/forms/${callId}`,
+      payload
     );
 
-    console.log("✅ SAVED:", res.data);
-    alert("Form saved successfully");
+    console.log(" Response:", res.data);
+
+    if (res.data.success) {
+      alert(" Form saved successfully to database!");
+      setTimeout(() => window.location.reload(), 500);
+    } else {
+      alert(" Error: " + (res.data.message || "Unknown error"));
+    }
 
   } catch (err) {
-    console.error("❌ SAVE ERROR:", err);
-    alert("Failed to save form");
+    console.error(" Save error:", err);
+    const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message;
+    alert(" Failed to save form: " + errorMsg);
   }
 };
 
@@ -194,7 +211,7 @@ const handleSubmit = async (e) => {
         borderRadius: '6px', 
         marginBottom: '20px',
         textAlign: 'center'
-      }}>⚠️ {error}</div>}
+      }}>âš ï¸ {error}</div>}
 
       {!loading && (
         <form onSubmit={handleSubmit}>
@@ -206,7 +223,7 @@ const handleSubmit = async (e) => {
           <p className="subtitle">The Data on the Form should be Also Stored on CORE SHAURRYATELE.COM</p>
         </div>
 
-        {/* 🔹 PERSONAL INFORMATION SECTION (NEW) */}
+        {/* ðŸ”¹ PERSONAL INFORMATION SECTION (NEW) */}
         <div className="form-section">
           <div className="section-title">Personal Information</div>
 
@@ -694,3 +711,4 @@ const handleSubmit = async (e) => {
 
 
 export default Form;
+
