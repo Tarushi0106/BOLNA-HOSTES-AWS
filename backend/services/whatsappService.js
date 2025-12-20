@@ -6,7 +6,7 @@ const Msg91WebhookLog = require('../models/Msg91WebhookLog');
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const MSG91_API_KEY = process.env.MSG91_API_KEY;
-const MSG91_TEMPLATE_NAME = process.env.MSG91_TEMPLATE_NAME || 'kyc_ivr';
+const MSG91_TEMPLATE_NAME = process.env.MSG91_TEMPLATE_NAME || 'msg';
 const MSG91_NUMBER = process.env.MSG91_NUMBER;
 
 async function sendWhatsAppMessage(fromNumber, name) {

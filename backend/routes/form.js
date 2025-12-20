@@ -15,8 +15,10 @@ router.get("/list-names", async (req, res) => {
       .lean();
 
     return res.json({
+      
       success: true,
       data: docs.map(f => ({
+        
         id: String(f._id),
         displayName: f.personName || "Unnamed Lead",
         phone: f.personPhone || "",
@@ -63,6 +65,7 @@ router.get("/prefill/:id", async (req, res) => {
     return res.json({
       success: true,
       data: {
+           bolnaCallId: call?._id || null,
         // FROM CALL
         personName: call?.name || "",
         personPhone: call?.phone_number || "",

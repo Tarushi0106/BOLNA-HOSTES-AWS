@@ -15,7 +15,7 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
-
+  bolnaCallId: null, 
     // 🔹 PERSONAL INFORMATION
     personName: "",
     personPhone: "",
@@ -83,6 +83,8 @@ useEffect(() => {
 
       setFormData(prev => ({
         ...prev,
+        
+  bolnaCallId: f.bolnaCallId || id,  
         personName: f.personName || "",
         personPhone: f.personPhone || "",
         personEmail: f.personEmail || "",
@@ -155,11 +157,30 @@ useEffect(() => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("📤 SUBMIT FORM DATA:", formData);
-    alert("Form submitted — check console");
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    if (!formData.bolnaCallId) {
+      alert("Missing Bolna Call ID");
+      return;
+    }
+
+    const res = await axios.post(
+      `${API_BASE}/api/forms/${formData.bolnaCallId}`,
+      formData
+    );
+
+    console.log("✅ SAVED:", res.data);
+    alert("Form saved successfully");
+
+  } catch (err) {
+    console.error("❌ SAVE ERROR:", err);
+    alert("Failed to save form");
+  }
+};
+
+
 
  return (
     <div className="form-container">
