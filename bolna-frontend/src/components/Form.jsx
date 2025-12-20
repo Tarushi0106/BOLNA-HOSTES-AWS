@@ -64,77 +64,55 @@ const Form = () => {
   console.log("PARAMS:", params);
 
   // 🔥 PREFILL: Load existing LeadForm if available, otherwise prefill personal info from call
-  useEffect(() => {
-    const loadFormData = async () => {
+useEffect(() => {
+  if (!callId) return;
+
+  const loadFormData = async () => {
+    try {
       setLoading(true);
+
+      const res = await axios.get(
+        `http://13.53.90.157/api/forms/prefill/${callId}`
+      );
+
+      const f = res.data?.data || {};
+
+      setFormData(prev => ({
+        ...prev,
+        personName: f.personName || "",
+        personPhone: f.personPhone || "",
+        personEmail: f.personEmail || "",
+        businessEntityName: f.businessEntityName || "",
+        state: f.state || "",
+        accountManager: f.accountManager || "",
+        hoAddress: f.hoAddress || "",
+        ceoName: f.ceoName || "",
+        ceoEmail: f.ceoEmail || "",
+        circleContactNo: f.circleContactNo || "",
+        panIndiaLocations: f.panIndiaLocations || "",
+        totalEmployees: f.totalEmployees || "",
+        annualTurnover: f.annualTurnover || "",
+        currentTelecomSpend: f.currentTelecomSpend || "",
+        currentDataSpend: f.currentDataSpend || "",
+        services: f.services || prev.services,
+        infrastructure: f.infrastructure || prev.infrastructure,
+        keyPerson1: f.keyPerson1 || prev.keyPerson1,
+        keyPerson2: f.keyPerson2 || prev.keyPerson2,
+        keyPerson3: f.keyPerson3 || prev.keyPerson3,
+        currentDiscussion: f.currentDiscussion || ""
+      }));
+
       setError(null);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load form data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (!callId) {
-        console.log("❌ callId missing");
-        setLoading(false);
-        return;
-      }
-
-      console.log("✅ callId from URL:", callId);
-
-      try {
-        // First, try to fetch existing forms by callId
-        const formsRes = await axios.get(`http://13.53.90.157:5001/api/forms/by-call/${callId}`);
-        const existingForms = formsRes.data.data;
-
-        if (existingForms && existingForms.length > 0) {
-          // Load the latest existing form
-          const latestForm = existingForms[0];
-          console.log("✅ Loading existing form:", latestForm);
-          setFormData(prev => ({
-            ...prev,
-            ...latestForm,
-            services: latestForm.services || prev.services,
-            infrastructure: latestForm.infrastructure || prev.infrastructure,
-            keyPerson1: latestForm.keyPerson1 || prev.keyPerson1,
-            keyPerson2: latestForm.keyPerson2 || prev.keyPerson2,
-            keyPerson3: latestForm.keyPerson3 || prev.keyPerson3,
-          }));
-        } else {
-          // No existing form, prefill personal info from call
-          console.log("✅ No existing form, prefilling personal info");
-         try {
-  const callRes = await axios.get(
-    `http://13.53.90.157:5001/api/forms/by-call/${callId}`
-  );
-
-  const forms = callRes.data.data;
-
-  if (!forms || forms.length === 0) {
-    console.log("ℹ️ No form yet, nothing to prefill");
-    return;
-  }
-
-  const c = forms[0];
-
-  setFormData(prev => ({
-    ...prev,
-    personName: c.personName || "",
-    personPhone: c.personPhone || "",
-    personEmail: c.personEmail || "",
-  }));
-
-} catch (callErr) {
-  console.error("❌ Call data fetch failed:", callErr);
-  setError("Could not load call data. Please enter details manually.");
-}
-
-        }
-      } catch (err) {
-        console.error("❌ Error loading form data:", err);
-        setError("Could not load form data. Proceeding with blank form.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFormData();
-  }, [callId]);
+  loadFormData();
+}, [callId]);
 
 
 
