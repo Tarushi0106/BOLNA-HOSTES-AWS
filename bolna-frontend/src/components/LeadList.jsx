@@ -3,7 +3,12 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/shaurrya_logo.png";
 
-const API_BASE = "http://13.53.90.157:5001";
+const API_BASE =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5001"
+    : "http://13.53.90.157:5001";
+
 
 export default function LeadList() {
   const [leads, setLeads] = useState([]);
@@ -31,6 +36,7 @@ export default function LeadList() {
   // Search filter
 useEffect(() => {
   const s = search.toLowerCase();
+
   setFiltered(
     leads.filter((l) =>
       (l.displayName || "").toLowerCase().includes(s) ||
@@ -79,7 +85,7 @@ useEffect(() => {
         {/* TABLE */}
         <div style={styles.tableBox}>
           <table style={styles.table}>
-       <thead>
+           <thead>
   <tr>
     <th style={styles.th}>NAME</th>
     <th style={styles.th}>PHONE</th>
@@ -91,37 +97,38 @@ useEffect(() => {
   </tr>
 </thead>
 
-<tbody>
-  {filtered.map((lead) => (
-    <tr key={lead.id} style={styles.row}>
-      <td style={styles.td}>{lead.displayName || "—"}</td>
-      <td style={styles.td}>{lead.phone || "—"}</td>
-      <td style={styles.td}>{lead.businessEntityName || "—"}</td>
-      <td style={styles.td}>{lead.state || "—"}</td>
-      <td style={styles.td}>{lead.totalEmployees || "—"}</td>
-      <td style={styles.td}>
-        {(lead.currentDiscussion || "—").slice(0, 50)}...
-      </td>
-      <td style={styles.td}>
-        <button
-          onClick={() => navigate(`/dashboard/lead/${lead.id}`)}
-          style={styles.viewBtn}
-        >
-          View
-        </button>
-      </td>
-    </tr>
-  ))}
 
-  {filtered.length === 0 && (
-    <tr>
-      <td colSpan="7" style={styles.noData}>
-        No leads found
-      </td>
-    </tr>
-  )}
-</tbody>
+            <tbody>
+              {filtered.map((lead) => (
+                <tr key={lead.id} style={styles.row}>
+                  <td style={styles.td}>{lead.displayName || "—"}</td>
+                  <td style={styles.td}>{lead.phone || "—"}</td>
+                  <td style={styles.td}>{lead.businessEntityName || "—"}</td>
+                   <td style={styles.td}>{lead.state || "—"}</td>
+                    <td style={styles.td}>{lead.totalEmployees || "—"}</td>
+                  <td style={styles.td}>
+                    {(lead.currentDiscussion || "—").slice(0, 50)}...
+                  </td>
 
+                  <td style={styles.td}>
+                    <button
+                      onClick={() => navigate(`/dashboard/lead/${lead.id}`)}
+                      style={styles.viewBtn}
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan="5" style={styles.noData}>
+                    No leads found
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
 

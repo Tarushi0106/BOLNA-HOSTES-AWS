@@ -8,21 +8,19 @@ const Calls = require("../models/Calls");
 /* =======================================================
    GET /api/forms/list-names
 ======================================================= */
-
-
 router.get("/list-names", async (req, res) => {
   try {
-    const forms = await LeadForm.aggregate([
-      { $sort: { updatedAt: -1 } }, // 🔥 latest first
-      {
-        $group: {
-          _id: "$bolnaCallId",       // 🔥 one form per call
-          doc: { $first: "$$ROOT" }
-        }
-      },
-      { $replaceRoot: { newRoot: "$doc" } },
-      { $sort: { updatedAt: -1 } }
-    ]);
+    const forms = await LeadForm.find({})
+      .select({
+        personName: 1,
+        personPhone: 1,
+        businessEntityName: 1,
+        state: 1,
+        totalEmployees: 1,
+        currentDiscussion: 1,
+      })
+      .sort({ updatedAt: -1 })
+      .lean();
 
     const data = forms.map(f => ({
       id: f._id,
@@ -37,12 +35,10 @@ router.get("/list-names", async (req, res) => {
     res.json({ success: true, data });
 
   } catch (err) {
-    console.error("❌ list-names error:", err);
+    console.error("❌ Lead list error:", err);
     res.status(500).json({ success: false });
   }
 });
-
-
 
 
 
@@ -102,73 +98,118 @@ router.get("/prefill/:id", async (req, res) => {
    POST /api/forms/:callId
     UPSERT (SAVE / UPDATE)
 ======================================================= */
-router.post("/:callId", async (req, res) => {
+// router.post("/:callId", async (req, res) => {
+//   try {
+//     const { callId } = req.params;
+
+//     console.log(" POST /api/forms/:callId");
+//     console.log("CallID:", callId);
+//     console.log("Payload keys:", Object.keys(req.body));
+
+//     // Validate callId format
+//     if (!mongoose.Types.ObjectId.isValid(callId)) {
+//       return res.status(400).json({ 
+//         success: false, 
+//         error: "Invalid Call ID format" 
+//       });
+//     }
+
+//     // Find the call
+//  let call = await Calls.findById(callId);
+
+// // 🔥 IF NOT A CALL ID, TRY FORM ID
+// if (!call) {
+//   const existingForm = await LeadForm.findById(callId);
+//   if (!existingForm) {
+//     return res.status(404).json({
+//       success: false,
+//       error: "Neither Call nor Form found"
+//     });
+//   }
+
+//   call = await Calls.findById(existingForm.bolnaCallId);
+//   if (!call) {
+//     return res.status(404).json({
+//       success: false,
+//       error: "Linked Call not found"
+//     });
+//   }
+// }
+
+
+//     console.log(" Found call:", call._id);
+
+//     // Remove bolnaCallId from payload to avoid conflicts
+//     const updateData = { ...req.body };
+//     delete updateData.bolnaCallId;
+
+//     // Update or create form
+//     const form = await LeadForm.findOneAndUpdate(
+//       { bolnaCallId: call._id },
+//       { ...updateData, bolnaCallId: call._id },
+//       { new: true, upsert: true, runValidators: false }
+//     );
+
+//     console.log(" Form saved to DB:", form._id);
+
+//     return res.json({ 
+//       success: true, 
+//       data: form,
+//       message: "Form saved successfully"
+//     });
+
+//   } catch (err) {
+//     console.error(" POST /api/forms error:", err);
+//     return res.status(500).json({ 
+//       success: false, 
+//       error: err.message || "Internal server error"
+//     });
+//   }
+// });
+
+router.post("/:id", async (req, res) => {
   try {
-    const { callId } = req.params;
+    const { id } = req.params;
 
-    console.log(" POST /api/forms/:callId");
-    console.log("CallID:", callId);
-    console.log("Payload keys:", Object.keys(req.body));
-
-    // Validate callId format
-    if (!mongoose.Types.ObjectId.isValid(callId)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Invalid Call ID format" 
-      });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: "Invalid ID" });
     }
 
-    // Find the call
- let call = await Calls.findById(callId);
+    // 🔥 STEP 1: Resolve CALL ID
+    let call = await Calls.findById(id);
 
-// 🔥 IF NOT A CALL ID, TRY FORM ID
-if (!call) {
-  const existingForm = await LeadForm.findById(callId);
-  if (!existingForm) {
-    return res.status(404).json({
-      success: false,
-      error: "Neither Call nor Form found"
-    });
-  }
+    // If ID is FORM ID → extract bolnaCallId
+    if (!call) {
+      const existingForm = await LeadForm.findById(id);
+      if (!existingForm || !existingForm.bolnaCallId) {
+        return res.status(404).json({ success: false, error: "Call/Form not found" });
+      }
+      call = await Calls.findById(existingForm.bolnaCallId);
+    }
 
-  call = await Calls.findById(existingForm.bolnaCallId);
-  if (!call) {
-    return res.status(404).json({
-      success: false,
-      error: "Linked Call not found"
-    });
-  }
-}
+    if (!call) {
+      return res.status(404).json({ success: false, error: "Linked Call not found" });
+    }
 
-
-    console.log(" Found call:", call._id);
-
-    // Remove bolnaCallId from payload to avoid conflicts
-    const updateData = { ...req.body };
-    delete updateData.bolnaCallId;
-
-    // Update or create form
+    // 🔥 STEP 2: UPSERT USING bolnaCallId (ONLY)
     const form = await LeadForm.findOneAndUpdate(
       { bolnaCallId: call._id },
-      { ...updateData, bolnaCallId: call._id },
-      { new: true, upsert: true, runValidators: false }
+      { ...req.body, bolnaCallId: call._id },
+      { new: true, upsert: true }
     );
 
-    console.log(" Form saved to DB:", form._id);
-
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       data: form,
       message: "Form saved successfully"
     });
 
   } catch (err) {
-    console.error(" POST /api/forms error:", err);
-    return res.status(500).json({ 
-      success: false, 
-      error: err.message || "Internal server error"
-    });
+    console.error("❌ Save error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
 
 module.exports = router;

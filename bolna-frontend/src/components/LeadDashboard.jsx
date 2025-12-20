@@ -11,7 +11,8 @@ const API_BASE =
     : "http://13.53.90.157:5001";
 
 const Form = () => {
-  const { id } = useParams();
+  const { callId } = useParams();
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -63,31 +64,43 @@ const Form = () => {
   });
 
   /* ================= PREFILL ================= */
-  useEffect(() => {
-    if (!id || didPrefill.current) return;
-    didPrefill.current = true;
+useEffect(() => {
+  if (!callId || didPrefill.current) return;
+  didPrefill.current = true;
 
-    const prefill = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(`${API_BASE}/api/forms/prefill/${id}`);
-        const f = res.data?.data || {};
+  const prefill = async () => {
+    try {
+      setLoading(true);
 
-        setFormData(prev => ({
-          ...prev,
-          ...f,
-          services: { ...prev.services, ...(f.services || {}) },
-          infrastructure: { ...prev.infrastructure, ...(f.infrastructure || {}) }
-        }));
-      } catch (err) {
-        setError(err.response?.data?.message || err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      console.log("📡 Fetching form for callId:", callId);
+      console.log("🌐 API:", `${API_BASE}/api/forms/prefill/${callId}`);
 
-    prefill();
-  }, [id]);
+      const res = await axios.get(
+        `${API_BASE}/api/forms/prefill/${callId}`
+      );
+
+      const f = res.data?.data || {};
+
+      setFormData(prev => ({
+        ...prev,
+        bolnaCallId: f.bolnaCallId || prev.bolnaCallId, // ⭐ CRITICAL
+        ...f,
+        services: { ...prev.services, ...(f.services || {}) },
+        infrastructure: { ...prev.infrastructure, ...(f.infrastructure || {}) }
+      }));
+
+    } catch (err) {
+      console.error("❌ Prefill failed:", err);
+      setError(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  prefill();
+}, [callId]);
+
+
 
   /* ================= INPUT HANDLER ================= */
   const handleInputChange = (e) => {
@@ -109,35 +122,42 @@ const Form = () => {
   };
 
   /* ================= SUBMIT ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (isSubmitting) return;
 
-    if (!id) {
-      alert("Missing Call/Form ID");
-      return;
-    }
+  if (!callId) {
+    alert("Missing Call ID");
+    return;
+  }
 
-    try {
-      setIsSubmitting(true);
+  if (!formData.bolnaCallId) {
+    alert("bolnaCallId missing — prefill failed");
+    return;
+  }
 
-      const res = await axios.post(
-        `${API_BASE}/api/forms/${id}`,
-        formData,
-        { headers: { "Content-Type": "application/json" } }
-      );
+  try {
+    setIsSubmitting(true);
 
-      if (res.data?.success) {
-        alert("Form saved successfully ✅");
-      } else {
-        alert("Save failed ❌");
-      }
-    } catch (err) {
-      alert(err.response?.data?.error || err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    await axios.post(
+      `${API_BASE}/api/forms/${callId}`,
+      formData,
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    alert("Form saved successfully ✅");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || err.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+
+
+
  return (
   <div className="form-container">
     {loading && (
@@ -645,15 +665,16 @@ const Form = () => {
 
         {/* Submit Button */}
         
-     <div className="form-footer">
-          <button
-            type="submit"
-            className="submit-btn"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Saving..." : "Submit Form"}
-          </button>
-        </div>
+<div className="form-footer">
+  <button
+    type="submit"
+    className="submit-btn"
+    disabled={isSubmitting}
+  >
+    {isSubmitting ? "Saving..." : "Submit Form"}
+  </button>
+</div>
+
       </form>
     )}
   </div>
