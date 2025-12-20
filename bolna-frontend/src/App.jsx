@@ -42,40 +42,42 @@ function AppContent() {
   }, [token, location.pathname, navigate]);
 
   return (
-    <Routes>
-      {/* PUBLIC ROUTES */}
-      <Route path="/" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+<Routes>
+  {/* PUBLIC ROUTES */}
+  <Route path="/" element={<Login />} />
+  <Route path="/signup" element={<Signup />} />
 
-      {/* ✅ PUBLIC LEAD FORM (WHATSAPP) */}
-      <Route path="/lead-form/:callId" element={<Form />} />
+  {/* ✅ PUBLIC LEAD FORM */}
+  <Route path="/lead-form/:callId" element={<Form />} />
 
   <Route path="/dashboard/lead/:id" element={<LeadDashboard />} />
-<Route path="/dashboard/messageLogs" element={<MessageLogs />} />
+  <Route path="/dashboard/messageLogs" element={<MessageLogs />} />
 
+  {/* PROTECTED ROUTES */}
+  <Route
+    path="/dashboard"
+    element={
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    }
+  />
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+  <Route
+    path="/calls"
+    element={
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    }
+  />
 
-      <Route
-        path="/calls"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/dashboard/leads" element={<LeadList />} />
+  <Route path="/dashboard/leads" element={<LeadList />} />
 
-      {/* fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+  {/* 🔥 SPA FALLBACK — DO NOT REDIRECT */}
+  <Route path="*" element={<Form />} />
+</Routes>
+
   );
 }
 
