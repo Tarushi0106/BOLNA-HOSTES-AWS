@@ -8,27 +8,43 @@ const Calls = require("../models/Calls");
 /* =======================================================
    GET /api/forms/list-names
 ======================================================= */
+
+
 router.get("/list-names", async (req, res) => {
   try {
-    const docs = await LeadForm.find({})
-      .sort({ createdAt: -1 })
-      .lean();
+    const forms = await LeadForm.aggregate([
+      { $sort: { updatedAt: -1 } }, // 🔥 latest first
+      {
+        $group: {
+          _id: "$bolnaCallId",       // 🔥 one form per call
+          doc: { $first: "$$ROOT" }
+        }
+      },
+      { $replaceRoot: { newRoot: "$doc" } },
+      { $sort: { updatedAt: -1 } }
+    ]);
 
-    return res.json({
-      success: true,
-      data: docs.map(f => ({
-        id: String(f._id),
-        displayName: f.personName || "Unnamed Lead",
-        phone: f.personPhone || "",
-        businessEntityName: f.businessEntityName || "",
-        currentDiscussion: f.currentDiscussion || "",
-        createdAt: f.createdAt
-      }))
-    });
+    const data = forms.map(f => ({
+      id: f._id,
+      displayName: f.personName || "—",
+      phone: f.personPhone || "—",
+      businessEntityName: f.businessEntityName || "—",
+      state: f.state || "—",
+      totalEmployees: f.totalEmployees || "—",
+      currentDiscussion: f.currentDiscussion || "—",
+    }));
+
+    res.json({ success: true, data });
+
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error("❌ list-names error:", err);
+    res.status(500).json({ success: false });
   }
 });
+
+
+
+
 
 
 
@@ -103,13 +119,27 @@ router.post("/:callId", async (req, res) => {
     }
 
     // Find the call
-    const call = await Calls.findById(callId);
-    if (!call) {
-      return res.status(404).json({ 
-        success: false, 
-        error: "Bolna call not found" 
-      });
-    }
+ let call = await Calls.findById(callId);
+
+// 🔥 IF NOT A CALL ID, TRY FORM ID
+if (!call) {
+  const existingForm = await LeadForm.findById(callId);
+  if (!existingForm) {
+    return res.status(404).json({
+      success: false,
+      error: "Neither Call nor Form found"
+    });
+  }
+
+  call = await Calls.findById(existingForm.bolnaCallId);
+  if (!call) {
+    return res.status(404).json({
+      success: false,
+      error: "Linked Call not found"
+    });
+  }
+}
+
 
     console.log(" Found call:", call._id);
 

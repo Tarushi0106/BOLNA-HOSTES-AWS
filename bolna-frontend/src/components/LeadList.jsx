@@ -29,17 +29,20 @@ export default function LeadList() {
   }
 
   // Search filter
-  useEffect(() => {
-    const s = search.toLowerCase();
-    setFiltered(
-      leads.filter((l) =>
-        (l.displayName || "").toLowerCase().includes(s) ||
-        (l.phone || "").toLowerCase().includes(s) ||
-        (l.businessEntityName || "").toLowerCase().includes(s) ||
-        (l.currentDiscussion || "").toLowerCase().includes(s)
-      )
-    );
-  }, [search, leads]);
+useEffect(() => {
+  const s = search.toLowerCase();
+  setFiltered(
+    leads.filter((l) =>
+      (l.displayName || "").toLowerCase().includes(s) ||
+      (l.phone || "").toLowerCase().includes(s) ||
+      (l.businessEntityName || "").toLowerCase().includes(s) ||
+      (l.currentDiscussion || "").toLowerCase().includes(s) ||
+      (l.state || "").toLowerCase().includes(s) ||
+      String(l.totalEmployees || "").includes(s)
+    )
+  );
+}, [search, leads]);
+
 
   const totalLeads = leads.length;
   const withBusiness = leads.filter((l) => l.businessEntityName && l.businessEntityName !== "—").length;
@@ -76,45 +79,49 @@ export default function LeadList() {
         {/* TABLE */}
         <div style={styles.tableBox}>
           <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>NAME</th>
-                <th style={styles.th}>PHONE</th>
-                <th style={styles.th}>BUSINESS ENTITY</th>
-                <th style={styles.th}>DISCUSSION</th>
-                <th style={styles.th}>VIEW</th>
-              </tr>
-            </thead>
+       <thead>
+  <tr>
+    <th style={styles.th}>NAME</th>
+    <th style={styles.th}>PHONE</th>
+    <th style={styles.th}>BUSINESS ENTITY</th>
+    <th style={styles.th}>STATE</th>
+    <th style={styles.th}>TOTAL EMPLOYEES</th>
+    <th style={styles.th}>DISCUSSION</th>
+    <th style={styles.th}>VIEW</th>
+  </tr>
+</thead>
 
-            <tbody>
-              {filtered.map((lead) => (
-                <tr key={lead.id} style={styles.row}>
-                  <td style={styles.td}>{lead.displayName || "—"}</td>
-                  <td style={styles.td}>{lead.phone || "—"}</td>
-                  <td style={styles.td}>{lead.businessEntityName || "—"}</td>
-                  <td style={styles.td}>
-                    {(lead.currentDiscussion || "—").slice(0, 50)}...
-                  </td>
+<tbody>
+  {filtered.map((lead) => (
+    <tr key={lead.id} style={styles.row}>
+      <td style={styles.td}>{lead.displayName || "—"}</td>
+      <td style={styles.td}>{lead.phone || "—"}</td>
+      <td style={styles.td}>{lead.businessEntityName || "—"}</td>
+      <td style={styles.td}>{lead.state || "—"}</td>
+      <td style={styles.td}>{lead.totalEmployees || "—"}</td>
+      <td style={styles.td}>
+        {(lead.currentDiscussion || "—").slice(0, 50)}...
+      </td>
+      <td style={styles.td}>
+        <button
+          onClick={() => navigate(`/dashboard/lead/${lead.id}`)}
+          style={styles.viewBtn}
+        >
+          View
+        </button>
+      </td>
+    </tr>
+  ))}
 
-                  <td style={styles.td}>
-                    <button
-                      onClick={() => navigate(`/dashboard/lead/${lead.id}`)}
-                      style={styles.viewBtn}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+  {filtered.length === 0 && (
+    <tr>
+      <td colSpan="7" style={styles.noData}>
+        No leads found
+      </td>
+    </tr>
+  )}
+</tbody>
 
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={styles.noData}>
-                    No leads found
-                  </td>
-                </tr>
-              )}
-            </tbody>
           </table>
         </div>
 

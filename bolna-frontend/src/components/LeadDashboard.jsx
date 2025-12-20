@@ -1,8 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
-import './form.css';
-import axios from 'axios';
+﻿import React, { useState, useEffect, useRef } from "react";
+import "./form.css";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 
-import { useParams } from 'react-router-dom';
+/* ================= API BASE ================= */
 const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
@@ -10,212 +11,158 @@ const API_BASE =
     : "http://13.53.90.157:5001";
 
 const Form = () => {
-  const { id } = useParams(); // âœ… objectId / callId from URL
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
+  const { id } = useParams();
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const didPrefill = useRef(false);
 
   const [formData, setFormData] = useState({
-  bolnaCallId: null, 
-    // ðŸ”¹ PERSONAL INFORMATION
     personName: "",
     personPhone: "",
     personEmail: "",
 
-    // Business Entity Section
-    businessEntityName: '',
-    state: '',
-    accountManager: '',
-    hoAddress: '',
-    ceoName: '',
-    ceoEmail: '',
-    circleContactNo: '',
-    panIndiaLocations: '',
-    totalEmployees: '',
-    annualTurnover: '',
-    currentTelecomSpend: '',
-    currentDataSpend: '',
-    
-    // Decision Makers
-    keyPerson1: { name: '', title: '', role: '', contactNo: '', email: '' },
-    keyPerson2: { name: '', title: '', role: '', contactNo: '', email: '' },
-    keyPerson3: { name: '', title: '', role: '', contactNo: '', email: '' },
-    
-    // Products/Services
+    businessEntityName: "",
+    state: "",
+    accountManager: "",
+    hoAddress: "",
+    ceoName: "",
+    ceoEmail: "",
+    circleContactNo: "",
+    panIndiaLocations: "",
+    totalEmployees: "",
+    annualTurnover: "",
+    currentTelecomSpend: "",
+    currentDataSpend: "",
+
+    keyPerson1: { name: "", title: "", role: "", contactNo: "", email: "" },
+    keyPerson2: { name: "", title: "", role: "", contactNo: "", email: "" },
+    keyPerson3: { name: "", title: "", role: "", contactNo: "", email: "" },
+
     services: {
-      internet: { site1: '', site2: '', site3: '', existingBandwidth: '' },
-      smartCCTV: { site1: '', site2: '', site3: '' },
-      wifiAsService: { site1: '', site2: '', site3: '' },
-      sdWAN: { site1: '', site2: '', site3: '' },
-      cyberSecurity: { site1: '', site2: '', site3: '' },
-      ispName: '',
-      existingPlans: '',
-      currentJioEngagement: '',
-      jioSubscribers: { cocpNos: '', ioipNos: '', jiofi: '' }
+      internet: { site1: "", site2: "", site3: "", existingBandwidth: "" },
+      smartCCTV: { site1: "", site2: "", site3: "" },
+      wifiAsService: { site1: "", site2: "", site3: "" },
+      sdWAN: { site1: "", site2: "", site3: "" },
+      cyberSecurity: { site1: "", site2: "", site3: "" },
+      ispName: "",
+      existingPlans: "",
+      currentJioEngagement: "",
+      jioSubscribers: { cocpNos: "", ioipNos: "", jiofi: "" }
     },
-    
-    // Infrastructure
+
     infrastructure: {
-      totalLocations: '',
-      fibre: { discussionInitiated: '', permissionReceived: '', wvp: '', completed: '' },
-      ibs: { discussionInitiated: '', permissionReceived: '', wvp: '', completed: '' },
-      wifi: { discussionInitiated: '', permissionReceived: '', wvp: '', completed: '' }
+      fibre: { discussionInitiated: "", permissionReceived: "", wvp: "", completed: "" },
+      ibs: { discussionInitiated: "", permissionReceived: "", wvp: "", completed: "" },
+      wifi: { discussionInitiated: "", permissionReceived: "", wvp: "", completed: "" }
     },
-    
-    // Current Discussion Thread
-    currentDiscussion: ''
+
+    currentDiscussion: ""
   });
 
-  /* ======================================================
-     ðŸ”¥ PREFILL PERSONAL INFO USING URL :id
-     ====================================================== */
-useEffect(() => {
-  if (!id) return;
+  /* ================= PREFILL ================= */
+  useEffect(() => {
+    if (!id || didPrefill.current) return;
+    didPrefill.current = true;
 
-  async function loadForm() {
-    try {
-      setLoading(true);
+    const prefill = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_BASE}/api/forms/prefill/${id}`);
+        const f = res.data?.data || {};
 
-      const res = await axios.get(
-        `${API_BASE}/api/forms/prefill/${id}`
-      );
+        setFormData(prev => ({
+          ...prev,
+          ...f,
+          services: { ...prev.services, ...(f.services || {}) },
+          infrastructure: { ...prev.infrastructure, ...(f.infrastructure || {}) }
+        }));
+      } catch (err) {
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const f = res.data?.data || {};
+    prefill();
+  }, [id]);
 
-      setFormData(prev => ({
-        ...prev,
-        
-  bolnaCallId: f.bolnaCallId || id,  
-        personName: f.personName || "",
-        personPhone: f.personPhone || "",
-        personEmail: f.personEmail || "",
-
-        businessEntityName: f.businessEntityName || "",
-        state: f.state || "",
-        accountManager: f.accountManager || "",
-        hoAddress: f.hoAddress || "",
-        ceoName: f.ceoName || "",
-        ceoEmail: f.ceoEmail || "",
-        circleContactNo: f.circleContactNo || "",
-        panIndiaLocations: f.panIndiaLocations || "",
-        totalEmployees: f.totalEmployees || "",
-        annualTurnover: f.annualTurnover || "",
-        currentTelecomSpend: f.currentTelecomSpend || "",
-        currentDataSpend: f.currentDataSpend || "",
-
-        services: f.services || prev.services,
-        infrastructure: f.infrastructure || prev.infrastructure,
-        keyPerson1: f.keyPerson1 || prev.keyPerson1,
-        keyPerson2: f.keyPerson2 || prev.keyPerson2,
-        keyPerson3: f.keyPerson3 || prev.keyPerson3,
-
-        currentDiscussion: f.currentDiscussion || ""
-      }));
-
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  loadForm();
-}, [id]);
-
-
-
-
-
-  /* ======================================================
-     INPUT HANDLER (UNCHANGED LOGIC)
-     ====================================================== */
+  /* ================= INPUT HANDLER ================= */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const keys = name.split('.');
+    const keys = name.split(".");
 
-    if (keys.length === 1) {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    } 
-    else if (keys.length === 2) {
-      setFormData(prev => ({
-        ...prev,
-        [keys[0]]: { ...prev[keys[0]], [keys[1]]: value }
-      }));
-    } 
-    else if (keys.length === 3) {
-      setFormData(prev => ({
-        ...prev,
-        [keys[0]]: {
-          ...prev[keys[0]],
-          [keys[1]]: {
-            ...prev[keys[0]][keys[1]],
-            [keys[2]]: value
-          }
-        }
-      }));
-    }
+    setFormData(prev => {
+      const updated = { ...prev };
+      let ref = updated;
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        ref[keys[i]] = { ...ref[keys[i]] };
+        ref = ref[keys[i]];
+      }
+
+      ref[keys[keys.length - 1]] = value;
+      return updated;
+    });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  /* ================= SUBMIT ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
 
-  try {
-    const callId = id; // Use URL param
-
-    if (!callId) {
-      alert("Missing Call ID from URL");
+    if (!id) {
+      alert("Missing Call/Form ID");
       return;
     }
 
-    console.log("📤 Submitting form for Call ID:", callId);
-    console.log(" Form data:", formData);
+    try {
+      setIsSubmitting(true);
 
-    const payload = {
-      ...formData,
-      bolnaCallId: callId
-    };
+      const res = await axios.post(
+        `${API_BASE}/api/forms/${id}`,
+        formData,
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-    const res = await axios.post(
-      `${API_BASE}/api/forms/${callId}`,
-      payload
-    );
-
-    console.log(" Response:", res.data);
-
-    if (res.data.success) {
-      alert(" Form saved successfully to database!");
-      setTimeout(() => window.location.reload(), 500);
-    } else {
-      alert(" Error: " + (res.data.message || "Unknown error"));
+      if (res.data?.success) {
+        alert("Form saved successfully ✅");
+      } else {
+        alert("Save failed ❌");
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || err.message);
+    } finally {
+      setIsSubmitting(false);
     }
-
-  } catch (err) {
-    console.error(" Save error:", err);
-    const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message;
-    alert(" Failed to save form: " + errorMsg);
-  }
-};
-
-
-
+  };
  return (
-    <div className="form-container">
-    
+  <div className="form-container">
+    {loading && (
+      <p style={{ textAlign: "center", color: "#666" }}>
+        Loading form data...
+      </p>
+    )}
 
-      {loading && <p style={{ textAlign: 'center', color: '#666' }}>Loading form data...</p>}
-      {error && <div style={{ 
-        background: '#fff3cd', 
-        color: '#856404', 
-        padding: '12px', 
-        borderRadius: '6px', 
-        marginBottom: '20px',
-        textAlign: 'center'
-      }}>âš ï¸ {error}</div>}
+    {error && (
+      <div
+        style={{
+          background: "#fff3cd",
+          color: "#856404",
+          padding: "12px",
+          borderRadius: "6px",
+          marginBottom: "20px",
+          textAlign: "center",
+        }}
+      >
+        ⚠️ {error}
+      </div>
+    )}
 
-      {!loading && (
-        <form onSubmit={handleSubmit}>
-
+    {!loading && !error && (
+      <form onSubmit={handleSubmit}>
 
         {/* Header */}
         <div className="form-header">
@@ -223,7 +170,7 @@ const handleSubmit = async (e) => {
           <p className="subtitle">The Data on the Form should be Also Stored on CORE SHAURRYATELE.COM</p>
         </div>
 
-        {/* ðŸ”¹ PERSONAL INFORMATION SECTION (NEW) */}
+        {/* 🔹 PERSONAL INFORMATION SECTION (NEW) */}
         <div className="form-section">
           <div className="section-title">Personal Information</div>
 
@@ -697,18 +644,21 @@ const handleSubmit = async (e) => {
         </div>
 
         {/* Submit Button */}
-        <div className="form-footer">
-          <button type="submit" className="submit-btn">
-            Submit Form
+        
+     <div className="form-footer">
+          <button
+            type="submit"
+            className="submit-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : "Submit Form"}
           </button>
         </div>
-
       </form>
-      )}
-    </div>
-  );
+    )}
+  </div>
+);
 };
-
+   
 
 export default Form;
-
