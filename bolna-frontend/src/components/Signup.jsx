@@ -8,7 +8,12 @@ export default function Signup(){
   const [error,setError]=useState('')
   const [loading,setLoading]=useState(false)
   const navigate=useNavigate()
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000'
+const API_BASE =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5001"
+    : "http://13.53.90.157:5001";
+
   async function submit(e){
     e.preventDefault()
     setError('')
