@@ -194,13 +194,18 @@ useEffect(() => {
 
             <div className="input-group">
               <label>Phone Number:</label>
-             <input 
+<input 
   type="tel"
   name="personPhone"
   value={formData.personPhone}
   readOnly
-  required
+  style={{
+    backgroundColor: "#f3f3f3",
+    cursor: "not-allowed",
+    pointerEvents: "none"
+  }}
 />
+
 
             </div>
 
