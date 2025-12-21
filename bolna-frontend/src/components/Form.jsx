@@ -194,13 +194,14 @@ useEffect(() => {
 
             <div className="input-group">
               <label>Phone Number:</label>
-              <input 
-                type="tel"
-                name="personPhone"
-                value={formData.personPhone}
-                onChange={handleInputChange}
-                required
-              />
+             <input 
+  type="tel"
+  name="personPhone"
+  value={formData.personPhone}
+  readOnly
+  required
+/>
+
             </div>
 
             <div className="input-group">
