@@ -9,7 +9,6 @@ const API_BASE =
     ? "http://localhost:5001"
     : "http://13.53.90.157:5001";
 
-
 export default function LeadList() {
   const [leads, setLeads] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -17,6 +16,7 @@ export default function LeadList() {
 
   const navigate = useNavigate();
 
+  // ✅ LOAD LEADS
   useEffect(() => {
     loadLeads();
   }, []);
@@ -33,27 +33,29 @@ export default function LeadList() {
     }
   }
 
-  // Search filter
-useEffect(() => {
-  const s = search.toLowerCase();
-
-  setFiltered(
-    leads.filter((l) =>
-      (l.displayName || "").toLowerCase().includes(s) ||
-      (l.phone || "").toLowerCase().includes(s) ||
-      (l.businessEntityName || "").toLowerCase().includes(s) ||
-      (l.currentDiscussion || "").toLowerCase().includes(s) ||
-      (l.state || "").toLowerCase().includes(s) ||
-      String(l.totalEmployees || "").includes(s)
-    )
-  );
-}, [search, leads]);
-
+  // ✅ SEARCH FILTER
+  useEffect(() => {
+    const s = search.toLowerCase();
+    setFiltered(
+      leads.filter(
+        (l) =>
+          (l.displayName || "").toLowerCase().includes(s) ||
+          (l.phone || "").toLowerCase().includes(s) ||
+          (l.businessEntityName || "").toLowerCase().includes(s) ||
+          (l.currentDiscussion || "").toLowerCase().includes(s) ||
+          (l.state || "").toLowerCase().includes(s) ||
+          String(l.totalEmployees || "").includes(s)
+      )
+    );
+  }, [search, leads]);
 
   const totalLeads = leads.length;
-  const withBusiness = leads.filter((l) => l.businessEntityName && l.businessEntityName !== "—").length;
-  const withDiscussion = leads.filter((l) => l.currentDiscussion && l.currentDiscussion !== "—").length;
-
+  const withBusiness = leads.filter(
+    (l) => l.businessEntityName && l.businessEntityName !== "—"
+  ).length;
+  const withDiscussion = leads.filter(
+    (l) => l.currentDiscussion && l.currentDiscussion !== "—"
+  ).length;
   return (
     <div style={styles.page}>
       
@@ -111,8 +113,8 @@ useEffect(() => {
                   </td>
 
                   <td style={styles.td}>
-                    <button
-                      onClick={() => navigate(`/dashboard/lead/${lead.id}`)}
+                   <button
+                      onClick={() => navigate(`/lead-form/${lead.id}`)}
                       style={styles.viewBtn}
                     >
                       View
