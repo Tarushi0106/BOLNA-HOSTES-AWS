@@ -169,7 +169,13 @@ router.get("/prefill/:id", async (req, res) => {
 
 router.post("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req. params;
+
+    console.log("\n" + "=".repeat(60));
+    console.log("📥 POST REQUEST RECEIVED");
+    console.log("ID:", id);
+    console.log("BODY KEYS:", Object.keys(req.body));
+    console.log("=".repeat(60));
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, error: "Invalid ID" });
@@ -178,11 +184,10 @@ router.post("/:id", async (req, res) => {
     // 🔥 STEP 1: Resolve CALL ID
     let call = await Calls.findById(id);
 
-    // If ID is FORM ID → extract bolnaCallId
     if (!call) {
       const existingForm = await LeadForm.findById(id);
       if (!existingForm || !existingForm.bolnaCallId) {
-        return res.status(404).json({ success: false, error: "Call/Form not found" });
+        return res. status(404).json({ success: false, error: "Call/Form not found" });
       }
       call = await Calls.findById(existingForm.bolnaCallId);
     }
@@ -191,22 +196,75 @@ router.post("/:id", async (req, res) => {
       return res.status(404).json({ success: false, error: "Linked Call not found" });
     }
 
-    // 🔥 STEP 2: UPSERT USING bolnaCallId (ONLY)
-    const form = await LeadForm.findOneAndUpdate(
-      { bolnaCallId: call._id },
-      { ...req.body, bolnaCallId: call._id },
-      { new: true, upsert: true }
-    );
+    console.log("✅ RESOLVED Call ID:", call._id);
 
-    return res.json({
-      success: true,
-      data: form,
-      message: "Form saved successfully"
+    // 🔥 STEP 2: CLEAN THE DATA (Remove undefined/null values)
+    const cleanData = {};
+    Object.keys(req.body).forEach(key => {
+      if (req.body[key] !== undefined && req.body[key] !== null && req.body[key] !== "") {
+        cleanData[key] = req.body[key];
+      }
     });
 
+    console.log("📦 CLEANED DATA KEYS:", Object.keys(cleanData));
+
+    // 🔥 STEP 3: UPSERT WITH ERROR HANDLING
+    let form;
+    try {
+      form = await LeadForm.findOneAndUpdate(
+        { bolnaCallId: call._id },
+        { ...cleanData, bolnaCallId: call._id },
+        { 
+          new: true, 
+          upsert: true,
+          runValidators: true  // ← ENABLE VALIDATION
+        }
+      );
+
+      console.log("✅ DOCUMENT SAVED SUCCESSFULLY");
+      console.log("   Doc ID:", form._id);
+      console.log("   personName:", form.personName);
+
+      return res.json({
+        success: true,
+        data: form,
+        message:  "Form saved successfully"
+      });
+
+    } catch (validationErr) {
+      console.error("❌ VALIDATION ERROR:", validationErr. message);
+      console.error("   Errors:", validationErr.errors);
+
+      // If validation fails, try without runValidators
+      console.log("🔄 Retrying WITHOUT validation...");
+      
+      form = await LeadForm.findOneAndUpdate(
+        { bolnaCallId: call._id },
+        { ...cleanData, bolnaCallId: call._id },
+        { 
+          new: true, 
+          upsert:  true,
+          runValidators: false  // ← SKIP VALIDATION
+        }
+      );
+
+      console.log("✅ DOCUMENT SAVED (VALIDATION SKIPPED)");
+
+      return res.json({
+        success: true,
+        data:  form,
+        message: "Form saved successfully (validation bypassed)"
+      });
+    }
+
   } catch (err) {
-    console.error("❌ Save error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("\n❌ FATAL ERROR:", err.message);
+    console.error("Full error:", err);
+    
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 });
 

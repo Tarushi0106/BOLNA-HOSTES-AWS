@@ -2,6 +2,7 @@
 import "./form.css";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 /* ================= API BASE ================= */
 const API_BASE =
@@ -16,11 +17,14 @@ const Form = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const [isSubmitting, setIsSubmitting] = useState(false);
+const [submitted, setSubmitted] = useState(false);
+
 
   const didPrefill = useRef(false);
 
   const [formData, setFormData] = useState({
+      bolnaCallId: "",
     personName: "",
     personPhone: "",
     personEmail: "",
@@ -70,7 +74,8 @@ useEffect(() => {
 
   const prefill = async () => {
     try {
-      setLoading(true);
+  
+
 
       console.log("📡 Fetching form for callId:", callId);
       console.log("🌐 API:", `${API_BASE}/api/forms/prefill/${callId}`);
@@ -122,33 +127,36 @@ useEffect(() => {
   };
 
   /* ================= SUBMIT ================= */
+  const navigate = useNavigate();
+
+  // const handleChange = (e) => {
+    
+  //   setFormData({
+  //     ...formData,
+  //     [e.target.name]: e.target.value,
+  //   });
+  // };
 const handleSubmit = async (e) => {
   e.preventDefault();
-  if (isSubmitting) return;
 
-  if (!callId) {
-    alert("Missing Call ID");
-    return;
-  }
+  if (!callId) return;
 
-  if (!formData.bolnaCallId) {
-    alert("bolnaCallId missing — prefill failed");
-    return;
-  }
+  setIsSubmitting(true);
 
   try {
-    setIsSubmitting(true);
+    const res = await fetch(`${API_BASE}/api/forms/${callId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
 
-    await axios.post(
-      `${API_BASE}/api/forms/${callId}`,
-      formData,
-      { headers: { "Content-Type": "application/json" } }
-    );
+    if (!res.ok) throw new Error(await res.text());
 
-    alert("Form saved successfully ✅");
+    // ✅ SUCCESS → REDIRECT
+    navigate("/thank-you", { replace: true });
+
   } catch (err) {
-    console.error(err);
-    alert(err.response?.data?.error || err.message);
+    alert(err.message || "Server error");
   } finally {
     setIsSubmitting(false);
   }
@@ -181,8 +189,10 @@ const handleSubmit = async (e) => {
       </div>
     )}
 
-    {!loading && !error && (
-      <form onSubmit={handleSubmit}>
+   {!loading && !error && !submitted && (
+  <form onSubmit={handleSubmit}>
+
+      
 
         {/* Header */}
         <div className="form-header">
@@ -666,13 +676,13 @@ const handleSubmit = async (e) => {
         {/* Submit Button */}
         
 <div className="form-footer">
-  <button
-    type="submit"
-    className="submit-btn"
-    disabled={isSubmitting}
-  >
-    {isSubmitting ? "Saving..." : "Submit Form"}
-  </button>
+<button
+  type="submit"
+  className="submit-btn"
+  disabled={isSubmitting}
+>
+  {isSubmitting ? "Saving..." : "Submit Form"}
+</button>
 </div>
 
       </form>

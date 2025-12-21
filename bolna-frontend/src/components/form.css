@@ -197,6 +197,14 @@ tbody tr:nth-child(even) { background:#fbfbfb; }
   border-collapse: collapse;
   min-width: 600px;
 }
+.success-box {
+  padding: 30px;
+  background: #e6fffa;
+  border: 1px solid #38b2ac;
+  border-radius: 10px;
+  text-align: center;
+  color: #065f46;
+}
 
 
 .infrastructure-table th,
