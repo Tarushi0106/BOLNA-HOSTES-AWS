@@ -70,7 +70,7 @@ for (const call of calls) {
       call.__raw?.from || call.__raw?.caller || 'N/A'
     );
   } catch (e) {
-    console.warn('⚠️ Failed to fetch raw for:', call.id);
+    // console.warn('⚠️ Failed to fetch raw for:', call.id);
     call.__raw = null;
   }
 

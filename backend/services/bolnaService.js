@@ -70,7 +70,7 @@ async function processSingleBolnaCall(call) {
   await ensureMongo();
 
   if (await Calls.findOne({ bolna_call_id: call.id })) {
-    console.log('⏭️ Duplicate skipped:', call.id);
+    // console.log('⏭️ Duplicate skipped:', call.id);
     return;
   }
 
