@@ -290,11 +290,10 @@ const fetchCalls = async () => {
                       : "⏳ Pending"}
                   </td>
 
-                  <td>
-                    {c.summary.length > 60
-                      ? c.summary.slice(0, 60) + "…"
-                      : c.summary}
-                  </td>
+                 <td className="summary-cell">
+  {c.summary}
+</td>
+
                 </tr>
               ))}
             </tbody>

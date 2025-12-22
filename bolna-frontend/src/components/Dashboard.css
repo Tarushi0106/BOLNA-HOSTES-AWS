@@ -255,6 +255,25 @@ body {
   transform: scale(0.97);
 }
 /* ================= FIX LONG PAGE SCROLL ================= */
+.summary-cell {
+  max-width: 420px;
+  max-height: 4.5em;          /* ~3 lines */
+  overflow-y: auto;           /* scroll if long */
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.5;
+  padding-right: 6px;
+}
+
+/* Optional: nicer scrollbar */
+.summary-cell::-webkit-scrollbar {
+  width: 6px;
+}
+
+.summary-cell::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
 
 .dashboard-layout {
   min-height: 100vh;
