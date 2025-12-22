@@ -22,35 +22,44 @@ async function sendWhatsAppMessage(fromNumber, name) {
 
     console.log('📤 REACHING MSG91 →', cleanNumber, name);
 
-    const response = await axios.post(
-      'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/',
-      {
-        integrated_number: MSG91_NUMBER,
-        content_type: 'template',
-        payload: {
-          messaging_product: 'whatsapp',
-          type: 'template',
-          template: {
-            name: MSG91_TEMPLATE_NAME,
-            language: { code: 'en' },
-            to_and_components: [
+  const response = await axios.post(
+  'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/',
+  {
+    integrated_number: MSG91_NUMBER,
+    content_type: 'template',
+    payload: {
+      messaging_product: 'whatsapp',
+      type: 'template',
+      template: {
+        name: MSG91_TEMPLATE_NAME, // EXACT approved name
+        language: { code: 'en' },
+        to_and_components: [
+          {
+            to: [cleanNumber],
+            components: [
               {
-                to: [cleanNumber],
-                components: {
-                  body_1: { type: 'text', value: name || 'Customer' }
-                }
+                type: 'body',
+                parameters: [
+                  {
+                    type: 'text',
+                    text: name || 'Customer'
+                  }
+                ]
               }
             ]
           }
-        }
-      },
-      {
-        headers: {
-          authkey: MSG91_API_KEY,
-          'Content-Type': 'application/json'
-        }
+        ]
       }
-    );
+    }
+  },
+  {
+    headers: {
+      authkey: MSG91_API_KEY,
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
 
     const request_id =
       typeof response.data?.request_id === 'string'

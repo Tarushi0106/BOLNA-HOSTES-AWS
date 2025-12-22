@@ -8,27 +8,33 @@ function extractPhone(text = '') {
   return m ? m[0].replace(/\D/g, '') : '';
 }
 
-function extractBestTime(text = '') {
-  if (!text) return null;
+function extractBestTime(text = "") {
+  if (!text || typeof text !== "string") return null;
 
-  const patterns = [
-    // today at 8 pm / tomorrow at 11:30 am
-    /\b(today|tomorrow|tonight)\b\s*(at)?\s*\b(\d{1,2}(:\d{2})?\s?(a\.?m\.?|p\.?m\.?))\b/i,
+  const normalized = text
+    .toLowerCase()
+    .replace(/\b(one)\b/, "1")
+    .replace(/\b(two)\b/, "2")
+    .replace(/\b(three)\b/, "3")
+    .replace(/\b(four)\b/, "4")
+    .replace(/\b(five)\b/, "5")
+    .replace(/\b(six)\b/, "6")
+    .replace(/\b(seven)\b/, "7")
+    .replace(/\b(eight)\b/, "8")
+    .replace(/\b(nine)\b/, "9")
+    .replace(/\b(ten)\b/, "10")
+    .replace(/\b(eleven)\b/, "11")
+    .replace(/\b(twelve)\b/, "12");
 
-    // at 8 pm today
-    /\b(\d{1,2}(:\d{2})?\s?(a\.?m\.?|p\.?m\.?))\b\s*(today|tomorrow|tonight)\b/i,
+  const match = normalized.match(
+    /\b(1[0-2]|0?[1-9])(:[0-5][0-9])?\s?(am|pm)\b/
+  );
 
-    // call me at 8 pm
-    /\b(call|callback|reach|contact)\b.*?\b(\d{1,2}(:\d{2})?\s?(a\.?m\.?|p\.?m\.?))\b/i
-  ];
-
-  for (const p of patterns) {
-    const m = text.match(p);
-    if (m) return m[0].trim();
-  }
-
-  return null;
+  return match ? match[0].toUpperCase() : null;
 }
+
+
+
 
 
 module.exports = {
