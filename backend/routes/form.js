@@ -14,6 +14,8 @@ router.get("/list-names", async (req, res) => {
       .select({
         personName: 1,
         personPhone: 1,
+        personEmail: 1,      
+  circleContactNo: 1,  
         businessEntityName: 1,
         state: 1,
         totalEmployees: 1,
@@ -26,6 +28,8 @@ router.get("/list-names", async (req, res) => {
       id: f._id,
       displayName: f.personName || "—",
       phone: f.personPhone || "—",
+        email: f.personEmail || "—",         
+  circleHead: f.circleContactNo || "—", 
       businessEntityName: f.businessEntityName || "—",
       state: f.state || "—",
       totalEmployees: f.totalEmployees || "—",
@@ -168,6 +172,25 @@ router.get("/prefill/:id", async (req, res) => {
 // });
 
 router.post("/:id", async (req, res) => {
+  // 🆕 CREATE NEW LEAD (EMPTY FORM)
+
+
+    // (1)
+    
+if (req.params.id === "create") {
+  const form = await LeadForm.create({
+    ...req.body,
+    bolnaCallId: null   // 👈 IMPORTANT
+  });
+
+  return res.json({
+    success: true,
+    data: form,
+    message: "Form created successfully"
+  });
+}
+
+
   try {
     const { id } = req. params;
 

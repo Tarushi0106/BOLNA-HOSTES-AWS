@@ -87,10 +87,12 @@ export default function LeadList() {
         {/* TABLE */}
         <div style={styles.tableBox}>
           <table style={styles.table}>
-           <thead>
+<thead>
   <tr>
     <th style={styles.th}>NAME</th>
     <th style={styles.th}>PHONE</th>
+    <th style={styles.th}>Email</th>
+    <th style={styles.th}>Circle Head</th>
     <th style={styles.th}>BUSINESS ENTITY</th>
     <th style={styles.th}>STATE</th>
     <th style={styles.th}>TOTAL EMPLOYEES</th>
@@ -100,37 +102,39 @@ export default function LeadList() {
 </thead>
 
 
-            <tbody>
-              {filtered.map((lead) => (
-                <tr key={lead.id} style={styles.row}>
-                  <td style={styles.td}>{lead.displayName || "—"}</td>
-                  <td style={styles.td}>{lead.phone || "—"}</td>
-                  <td style={styles.td}>{lead.businessEntityName || "—"}</td>
-                   <td style={styles.td}>{lead.state || "—"}</td>
-                    <td style={styles.td}>{lead.totalEmployees || "—"}</td>
-                  <td style={styles.td}>
-                    {(lead.currentDiscussion || "—").slice(0, 50)}...
-                  </td>
 
-                  <td style={styles.td}>
-                   <button
-                      onClick={() => navigate(`/lead-form/${lead.id}`)}
-                      style={styles.viewBtn}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+           <tbody>
+  {filtered.map((lead) => (
+    <tr key={lead.id} style={styles.row}>
+      <td style={styles.td}>{lead.displayName || "—"}</td>
+      <td style={styles.td}>{lead.phone || "—"}</td>
 
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={styles.noData}>
-                    No leads found
-                  </td>
-                </tr>
-              )}
-            </tbody>
+      {/* ✅ EMAIL */}
+      <td style={styles.td}>{lead.email || "—"}</td>
+
+      {/* ✅ CIRCLE HEAD */}
+      <td style={styles.td}>{lead.circleHead || "—"}</td>
+
+      <td style={styles.td}>{lead.businessEntityName || "—"}</td>
+      <td style={styles.td}>{lead.state || "—"}</td>
+      <td style={styles.td}>{lead.totalEmployees || "—"}</td>
+
+      <td style={styles.td}>
+        {(lead.currentDiscussion || "—").slice(0, 50)}...
+      </td>
+
+      <td style={styles.td}>
+        <button
+          onClick={() => navigate(`/lead-form/${lead.id}`)}
+          style={styles.viewBtn}
+        >
+          View
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
           </table>
         </div>
 
@@ -264,11 +268,12 @@ const styles = {
 
   th: {
     padding: "15px",
-    fontSize: 14,
-    fontWeight: 700,
-    textAlign: "left",
-    borderBottom: "2px solid #eee",
-    color: "#444",
+  fontSize: 14,
+  fontWeight: 700,
+  textAlign: "left",
+  borderBottom: "2px solid #eee",
+  color: "#444",
+  background: "#ffffff"
   },
 
   td: {
@@ -296,4 +301,5 @@ const styles = {
     textAlign: "center",
     color: "#777",
   },
+  
 };

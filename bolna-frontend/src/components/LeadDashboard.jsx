@@ -69,9 +69,19 @@ const [submitted, setSubmitted] = useState(false);
 
   /* ================= PREFILL ================= */
 useEffect(() => {
-  if (!callId || didPrefill.current) return;
-  didPrefill.current = true;
+  // if (!callId || didPrefill.current) return;        (1)
+  
 
+
+if (!callId || callId === "new" || didPrefill.current) {
+  setLoading(false); // allow empty form
+  return;
+}
+
+
+
+
+ didPrefill.current = true;
   const prefill = async () => {
     try {
   
@@ -139,12 +149,34 @@ useEffect(() => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  if (!callId) return;
+  // if (!callId) return;                                    (2)
+
+
+
+
+
+  const submitId = callId === "new" ? "create" : callId;
+
+
+
+
+
+
+
 
   setIsSubmitting(true);
 
   try {
-    const res = await fetch(`${API_BASE}/api/forms/${callId}`, {
+    // const res = await fetch(`${API_BASE}/api/forms/${callId}`, {               (3)
+
+
+
+const res = await fetch(`${API_BASE}/api/forms/${submitId}`, {
+
+
+
+
+
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
