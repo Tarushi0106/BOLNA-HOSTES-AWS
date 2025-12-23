@@ -14,8 +14,9 @@ const API_BASE =
 /* ---------------- DATE FORMATTER ---------------- */
 const formatDateTime = (iso) => {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleString("en-IN", {
+
+  return new Date(iso).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata", // 🔥 THIS FIXES WRONG TIME
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -24,6 +25,7 @@ const formatDateTime = (iso) => {
     hour12: true,
   });
 };
+
 
 const Dashboard = () => {
   const [calls, setCalls] = useState([]);
@@ -63,11 +65,12 @@ const normalizeCalls = (data) => {
       c.user_number ||   // fallback if backend sends old field
       "N/A",
 
-    email: c.email || "N/A",
-    best_time_to_call: c.best_time_to_call || "N/A",
+    // email: c.email || "N/A",
+    // best_time_to_call: c.best_time_to_call || "N/A",
     whatsapp_status: c.whatsapp_status || "pending",
     summary: c.summary || "—",
-    createdAt: c.createdAt,
+  timestamp: b.createdAt,
+
   }));
 };
 
@@ -104,11 +107,11 @@ const fetchCalls = async () => {
         name: c.name || "N/A",
         phone_number: c.phone_number || "N/A",
         bolna_from_number: bolna?.fromNumber || c.from_number || "N/A",
-        email: c.email || "N/A",
-        best_time_to_call: c.best_time_to_call || "N/A",
+        // email: c.email || "N/A",
+        // best_time_to_call: c.best_time_to_call || "N/A",
         whatsapp_status: c.whatsapp_status || "failed",
         summary: c.summary || "—",
-        createdAt: c.createdAt,
+     timestamp: c.whatsapp_sent_at || c.call_timestamp || c.createdAt,
       };
     });
 
@@ -127,19 +130,20 @@ const fetchCalls = async () => {
         name: "N/A",
         phone_number: "N/A",
         bolna_from_number: b.fromNumber || "N/A",
-        email: "N/A",
-        best_time_to_call: "N/A",
+        // email: "N/A",
+        // best_time_to_call: "N/A",
         whatsapp_status: "failed",
         summary: "Call failed before lead capture",
-        createdAt: b.createdAt,
+       timestamp: b.createdAt,
       }));
 
     // 3️⃣ Combine both
-    const finalData = [...mergedFromCalls, ...bolnaOnlyFailed]
-      .filter(
-        (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
-      )
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+ const finalData = [...mergedFromCalls, ...bolnaOnlyFailed]
+  .filter(
+    (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
+  )
+.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
 
     setCalls(finalData);
   } catch (err) {
@@ -237,10 +241,10 @@ const fetchCalls = async () => {
             <p>{calls.filter((c) => c.phone_number !== "N/A").length}</p>
           </div>
 
-          <div className="stat-card">
+          {/* <div className="stat-card">
             <h4>With Email</h4>
             <p>{calls.filter((c) => c.email !== "N/A").length}</p>
-          </div>
+          </div> */}
 
           <div className="stat-card">
             <h4>Status</h4>
@@ -259,8 +263,8 @@ const fetchCalls = async () => {
                 <th>Name</th>
                 <th>Bolna Phone no.</th>
                 <th>User Phone no.</th>
-                <th>Email</th>
-                <th>Best Time</th>
+                {/* <th>Email</th>
+                <th>Best Time</th> */}
                 <th>Date & Time</th> {/* 🔥 NEW */}
                 <th>Status</th>
                 <th>Summary</th>
@@ -274,13 +278,21 @@ const fetchCalls = async () => {
                   <td>{c.name}</td>
                <td>{c.bolna_from_number}</td>
 <td>{c.phone_number}</td>
-
+{/* 
                   <td>{c.email}</td>
-                  <td>{c.best_time_to_call}</td>
+ <td>
+  {c.best_time_to_call
+    ? c.best_time_to_call.match(
+        /\b(1[0-2]|0?[1-9])(:[0-5][0-9])?\s?(AM|PM)\b/i
+      )?.[0] || "N/A"
+    : "N/A"}
+</td> */}
+
+
 
                   {/* 🔥 MongoDB Date */}
-                  <td>{formatDateTime(c.call_timestamp || c.createdAt)
-}</td>
+        <td>{formatDateTime(c.timestamp)}</td>
+
 
                   <td>
                     {c.whatsapp_status === "sent"
