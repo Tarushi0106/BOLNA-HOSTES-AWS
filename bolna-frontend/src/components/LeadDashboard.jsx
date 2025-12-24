@@ -5,22 +5,22 @@ import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
 /* ================= API BASE ================= */
-const API_BASE =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5001"
-  
-   : "http://13.53.90.157:5001";
-
-
-
-
-
 // const API_BASE =
 //   window.location.hostname === "localhost" ||
 //   window.location.hostname === "127.0.0.1"
 //     ? "http://localhost:5001"
-//      : "";
+  
+//    : "http://13.53.90.157:5001";
+
+
+
+
+
+const API_BASE =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5001"
+     : "";
 
 
 
