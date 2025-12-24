@@ -109,7 +109,7 @@ import Signup from './components/Signup';
 import LeadDashboard from "./components/LeadDashboard";
 
 import LeadList from "./components/LeadList";
-import MessageLogs from "./components/MessageLogs";
+
 
 import './App.css';
 
@@ -143,7 +143,7 @@ function AppContent() {
 <Route path="/lead-form/:callId" element={<LeadDashboard />} />
 
 
-      <Route path="/dashboard/messageLogs" element={<MessageLogs />} />
+     
 
       {/* PROTECTED ROUTES */}
       <Route
