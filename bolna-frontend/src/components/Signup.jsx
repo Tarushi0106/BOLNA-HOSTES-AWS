@@ -12,7 +12,8 @@ const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:5001"
-    : "http://13.53.90.157:5001";
+     : "";
+    // : "http://13.53.90.157:5001";
 
   async function submit(e){
     e.preventDefault()
