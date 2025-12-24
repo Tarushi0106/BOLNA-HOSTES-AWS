@@ -1,16 +1,20 @@
-const { sendWhatsAppMessage } = require('./whatsappService.js');
+// testAutoCall.js
+const { handleAutomaticCall } = require('./services/autoCallHandler.js');
 
-async function testMessage() {
+async function test() {
+  console.log('🧪 Testing automatic call handling...');
+  
   try {
-    const phoneNumber = '9910205084'; // Your actual number
-    const name = 'Tarushi'; // Your actual name
+    // Simulate a call
+    const result = await handleAutomaticCall('9910205084', 'Tarushi');
     
-    console.log('Sending WhatsApp message...');
-    const result = await sendWhatsAppMessage(phoneNumber, name);
-    console.log('Message sent successfully! ');
+    console.log('✅ Test successful!');
+    console.log('ObjectId:', result.objectId);
+    console.log('Lead Form URL:', result.leadFormUrl);
+    
   } catch (error) {
-    console.error('Failed to send message:', error);
+    console.error('❌ Test failed:', error.message);
   }
 }
 
-testMessage();
+test();

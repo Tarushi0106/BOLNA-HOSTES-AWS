@@ -1,13 +1,14 @@
+// services/whatsappService.js
 const axios = require('axios');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-async function sendWhatsAppMessage(phoneNumber, name) {
+async function sendWhatsAppMessage(phoneNumber, name, objectId) {
   let cleanNumber = String(phoneNumber || '').replace(/\D/g, '');
   if (cleanNumber.length === 10) cleanNumber = '91' + cleanNumber;
 
   const payload = {
-    integrated_number: process.env.MSG91_NUMBER, // "919820708573"
+    integrated_number: process.env.MSG91_NUMBER,
     content_type: 'template',
     payload: {
       messaging_product: 'whatsapp',
@@ -16,21 +17,21 @@ async function sendWhatsAppMessage(phoneNumber, name) {
         name: 'msg2',
         language: {
           code: 'en',
-          policy: 'deterministic' // ✅ Required as per your template
+          policy: 'deterministic'
         },
-        namespace: '200e5e99_0383_4028_94ab_da0ea079f023', // ✅ Required
+        namespace: '200e5e99_0383_4028_94ab_da0ea079f023',
         to_and_components: [
           {
-            to: [cleanNumber], // ✅ Must be an array
+            to: [cleanNumber],
             components: {
               body_1: {
                 type: 'text',
-                value: name // This replaces the "name" in your message body
+                value: name
               },
-              button_1: { // ✅ Note: button_1 (not button_url_1)
-                subtype: 'url', // ✅ This is required
+              button_1: {
+                subtype: 'url',
                 type: 'text',
-                value: name // This replaces the {{1}} in your button URL
+                value: objectId  // ObjectId goes in the button URL
               }
             }
           }
@@ -39,7 +40,8 @@ async function sendWhatsAppMessage(phoneNumber, name) {
     }
   };
 
-  console.log('Sending payload:', JSON.stringify(payload, null, 2));
+  console.log('🔗 WhatsApp URL will contain:', objectId);
+  console.log('🔗 Full URL: http://13.53.90.157:3000/lead-form/' + objectId);
 
   try {
     const res = await axios.post(
@@ -52,11 +54,10 @@ async function sendWhatsAppMessage(phoneNumber, name) {
         }
       }
     );
-
-    console.log('✅ MSG91 RESPONSE:', res.data);
-    return res.data;
+    console.log('✅ WhatsApp sent with ObjectId:', objectId);
+    return { success: true, objectId, ...res.data };
   } catch (error) {
-    console.error('❌ MSG91 ERROR:', error.response?.data || error.message);
+    console.error('❌ WhatsApp error:', error.response?.data || error.message);
     throw error;
   }
 }

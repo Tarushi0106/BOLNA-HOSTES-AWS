@@ -143,7 +143,14 @@ if (!fromNumber) {
   try {
     console.log('📞 Sending WhatsApp to:', fromNumber);
 
-    const res = await sendWhatsAppMessage(fromNumber, name || 'Customer');
+const objectId = savedCall._id.toString();
+
+const res = await sendWhatsAppMessage(
+  fromNumber,
+  name || 'Customer',
+  objectId // ✅ THIS IS THE KEY FIX
+);
+
 
     await Calls.findByIdAndUpdate(savedCall._id, {
       whatsapp_status: res?.success ? 'sent' : 'failed',
@@ -173,7 +180,12 @@ async function sendPendingWhatsAppMessages({ limit = 20 } = {}) {
 
   for (const c of pending) {
     try {
-      const res = await sendWhatsAppMessage(c.from_number, c.name || 'Customer');
+     const res = await sendWhatsAppMessage(
+  c.from_number,
+  c.name || 'Customer',
+  c._id.toString()
+);
+
       await Calls.findByIdAndUpdate(c._id, {
         whatsapp_status: 'sent',
         whatsapp_sent_at: new Date(),
