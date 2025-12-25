@@ -191,7 +191,19 @@ tbody tr:nth-child(even) { background:#fbfbfb; }
   overflow-x: auto;
   margin-bottom: 20px;
 }
+/* Read-only field styling */
+.readonly-field {
+  background-color: #f5f5f5 !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+  border-color: #ddd !important;
+  opacity: 0.9 !important;
+}
 
+/* Optional: Add a subtle indicator */
+.readonly-field:hover {
+  background-color: #f5f5f5 !important;
+}
 .infrastructure-table table {
   width: 100%;
   border-collapse: collapse;

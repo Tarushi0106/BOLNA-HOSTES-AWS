@@ -269,16 +269,16 @@ const handleSubmit = async (e) => {
               />
             </div>
 
-            <div className="input-group">
-              <label>Phone Number:</label>
-              <input 
-                type="tel"
-                name="personPhone"
-                value={formData.personPhone}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+         <div className="input-group">
+  <label>Phone Number:</label>
+  <input
+    type="tel"
+    name="personPhone"
+    value={formData.personPhone}
+    readOnly
+    className="readonly-field"
+  />
+</div>
 
             <div className="input-group">
               <label>Email:</label>
