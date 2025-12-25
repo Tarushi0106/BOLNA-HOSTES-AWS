@@ -13,30 +13,31 @@ async function sendWhatsAppMessage(phoneNumber, name, objectId) {
     payload: {
       messaging_product: 'whatsapp',
       type: 'template',
-      template: {
-        name: process.env.MSG91_TEMPLATE_NAME,
-        language: {
-          code: 'en',
-          policy: 'deterministic'
+   template: {
+  name: process.env.MSG91_TEMPLATE_NAME,
+  language: {
+    code: 'en',
+    policy: 'deterministic'
+  },
+  namespace: "41254aa9_0b89_4bd3_9d90_28d1124fe47c",
+  to_and_components: [
+    {
+      to: [cleanNumber],
+      components: {
+        body_1: {
+          type: 'text',
+          value: name
         },
-        namespace: '200e5e99_0383_4028_94ab_da0ea079f023',
-        to_and_components: [
-          {
-            to: [cleanNumber],
-            components: {
-              body_1: {
-                type: 'text',
-                value: name
-              },
-              button_1: {
-                subtype: 'url',
-                type: 'text',
-                value: objectId  // ObjectId goes in the button URL
-              }
-            }
-          }
-        ]
+        button_1: {
+          subtype: 'url',
+          type: 'text',
+          value: objectId
+        }
       }
+    }
+  ]
+}
+
     }
   };
 
