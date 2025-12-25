@@ -1,7 +1,12 @@
 // services/whatsappService.js
 const axios = require('axios');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+console.log(
+  'MSG91_API_KEY =',
+  process.env.MSG91_API_KEY,
+  'length =',
+  process.env.MSG91_API_KEY?.length
+);
+
 
 async function sendWhatsAppMessage(phoneNumber, name, objectId) {
   let cleanNumber = String(phoneNumber || '').replace(/\D/g, '');

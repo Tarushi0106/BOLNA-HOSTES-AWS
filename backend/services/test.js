@@ -1,3 +1,6 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 const { sendWhatsAppMessage } = require('./whatsappService');
 
 // 🔴 CHANGE THIS TO YOUR OWN NUMBER (must be WhatsApp enabled)
