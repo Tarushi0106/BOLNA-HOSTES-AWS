@@ -22,6 +22,19 @@ const API_BASE =
 
 
 
+const formatDateTime = (iso) => {
+  if (!iso) return "—";
+
+  return new Date(iso).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 
 
@@ -31,7 +44,13 @@ export default function LeadList() {
   const [search, setSearch] = useState("");
 
   const navigate = useNavigate();
+const user = JSON.parse(localStorage.getItem("user"));
 
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  navigate("/", { replace: true });
+};
   // ✅ LOAD LEADS
   useEffect(() => {
     loadLeads();
@@ -76,9 +95,21 @@ export default function LeadList() {
     <div style={styles.page}>
       
       {/* NAVBAR */}
-      <div style={styles.navbar}>
-        <img src={Logo} alt="logo" style={styles.logo} />
-      </div>
+   <div style={styles.navbar}>
+  <img src={Logo} alt="logo" style={styles.logo} />
+
+  {/* RIGHT SIDE USER + LOGOUT */}
+  <div style={styles.navRight}>
+    <div style={styles.avatar}>
+      {user?.email?.[0]?.toUpperCase() || "U"}
+    </div>
+    <span style={styles.userEmail}>{user?.email}</span>
+    <button onClick={handleLogout} style={styles.logoutBtn}>
+      🚪
+    </button>
+  </div>
+</div>
+
 
       <div style={styles.container}>
         <h1 style={styles.heading}>Leads Dashboard</h1>
@@ -111,7 +142,7 @@ export default function LeadList() {
     <th style={styles.th}>Circle Head</th>
     <th style={styles.th}>BUSINESS ENTITY</th>
     <th style={styles.th}>STATE</th>
-    <th style={styles.th}>TOTAL EMPLOYEES</th>
+    <th style={styles.th}>DATE & TIME</th> {/* ✅ NEW */}
     <th style={styles.th}>DISCUSSION</th>
     <th style={styles.th}>VIEW</th>
   </tr>
@@ -119,35 +150,36 @@ export default function LeadList() {
 
 
 
+
            <tbody>
   {filtered.map((lead) => (
-    <tr key={lead.id} style={styles.row}>
-      <td style={styles.td}>{lead.displayName || "—"}</td>
-      <td style={styles.td}>{lead.phone || "—"}</td>
+<tr key={lead.id} style={styles.row}>
+  <td style={styles.td}>{lead.displayName || "—"}</td>
+  <td style={styles.td}>{lead.phone || "—"}</td>
+  <td style={styles.td}>{lead.email || "—"}</td>
+  <td style={styles.td}>{lead.circleHead || "—"}</td>
+  <td style={styles.td}>{lead.businessEntityName || "—"}</td>
+  <td style={styles.td}>{lead.state || "—"}</td>
 
-      {/* ✅ EMAIL */}
-      <td style={styles.td}>{lead.email || "—"}</td>
+  {/* ✅ DATE & TIME FROM DB */}
+  <td style={styles.td}>
+    {formatDateTime(lead.createdAt)}
+  </td>
 
-      {/* ✅ CIRCLE HEAD */}
-      <td style={styles.td}>{lead.circleHead || "—"}</td>
+  <td style={styles.td}>
+    {(lead.currentDiscussion || "—").slice(0, 50)}...
+  </td>
 
-      <td style={styles.td}>{lead.businessEntityName || "—"}</td>
-      <td style={styles.td}>{lead.state || "—"}</td>
-      <td style={styles.td}>{lead.totalEmployees || "—"}</td>
+  <td style={styles.td}>
+    <button
+      onClick={() => navigate(`/lead-form/${lead.id}`)}
+      style={styles.viewBtn}
+    >
+      View
+    </button>
+  </td>
+</tr>
 
-      <td style={styles.td}>
-        {(lead.currentDiscussion || "—").slice(0, 50)}...
-      </td>
-
-      <td style={styles.td}>
-        <button
-          onClick={() => navigate(`/lead-form/${lead.id}`)}
-          style={styles.viewBtn}
-        >
-          View
-        </button>
-      </td>
-    </tr>
   ))}
 </tbody>
 
@@ -317,5 +349,49 @@ const styles = {
     textAlign: "center",
     color: "#777",
   },
-  
+    navRight: {
+    marginLeft: "auto",
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    paddingRight: 25,
+  },
+
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    background: "#c92b23",
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+    fontSize: 16,
+  },
+
+  userEmail: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#333",
+    whiteSpace: "nowrap",
+  },
+
+ logoutBtn: {
+  border: "none",
+  background: "#c92b23",      // 🔴 red background
+  color: "#fff",
+  fontSize: 18,
+  cursor: "pointer",
+  width: 34,
+  height: 34,
+  borderRadius: "50%",        // ⭕ circle
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 0,
+  lineHeight: 1,
+},
+
+
 };

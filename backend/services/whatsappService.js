@@ -14,7 +14,7 @@ async function sendWhatsAppMessage(phoneNumber, name, objectId) {
       messaging_product: 'whatsapp',
       type: 'template',
       template: {
-        name: 'msg2',
+        name: process.env.MSG91_TEMPLATE_NAME,
         language: {
           code: 'en',
           policy: 'deterministic'

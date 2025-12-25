@@ -89,13 +89,21 @@ body {
 }
 
 .logout-btn {
-  background: #c92b23;
   border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
+  background: #c92b23;   /* 🔴 red background */
+  color: #fff;
+  font-size: 18px;
   cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;    /* ⭕ circle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
 }
+
 
 /* =========================================================
    MAIN CONTENT AREA

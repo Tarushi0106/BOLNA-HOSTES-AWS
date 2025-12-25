@@ -205,9 +205,7 @@ const fetchCalls = async () => {
             <img src={shaurrya_logo} alt="logo" className="navbar-logo" />
           </div>
 
-          <div className="navbar-center">
-            <h3>Calls Management System</h3>
-          </div>
+         
 
           <div className="navbar-user">
             <div className="avatar">

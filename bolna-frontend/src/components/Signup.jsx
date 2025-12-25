@@ -1,22 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import './AuthForm.css'
-export default function Signup(){
-  const [name,setName]=useState('')
-  const [email,setEmail]=useState('')
-  const [password,setPassword]=useState('')
-  const [error,setError]=useState('')
-  const [loading,setLoading]=useState(false)
-  const navigate=useNavigate()
-// const API_BASE =
-//   window.location.hostname === "localhost" ||
-//   window.location.hostname === "127.0.0.1"
-//     ? "http://localhost:5001"
-  
-//    : "http://13.53.90.157:5001";
 
-
-
+const ALLOWED_EMAILS = [
+  "tarushi.chaudhary@shaurryatele.com",
+  "salil@shaurryatele.com",
+  "juhi@shaurryatele.com",
+  "akram@shaurryatele.com",
+];
 
 const API_BASE =
   window.location.hostname === "localhost" ||
@@ -24,64 +15,125 @@ const API_BASE =
     ? "http://localhost:5001"
     : "";
 
+export default function Signup() {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-
-  async function submit(e){
+  async function submit(e) {
     e.preventDefault()
     setError('')
-    if(!name||!email||!password){
+    setSuccess('')
+
+    if (!name || !email || !password || !confirmPassword) {
       setError('All fields are required')
       return
     }
-    if(password.length<6){
-      setError('Password must be at least 6 characters')
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
       return
     }
-    setLoading(true)
-    try{
-     const res = await fetch(`${API_BASE}/api/auth/signup`, {
 
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name,email,password})
+    const normalizedEmail = email.toLowerCase()
+
+    // 🔒 Frontend allowlist (UX only)
+    if (!ALLOWED_EMAILS.includes(normalizedEmail)) {
+      setError('This email is not authorized to create an account.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email: normalizedEmail,
+          password
+        })
       })
-      const data=await res.json()
-      if(!res.ok){
-        setError(data.message||'Signup failed')
-        setLoading(false)
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.message || 'Signup failed')
         return
       }
-      localStorage.setItem('token',data.token)
-      localStorage.setItem('user', JSON.stringify({ email: email, name: name }))
-      navigate('/dashboard')
-    }catch(err){
+
+      setSuccess('Account created successfully ✅')
+      setTimeout(() => navigate('/login'), 1200)
+
+    } catch {
       setError('Network error: unable to reach server')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
+
   return (
     <div className="auth-wrapper">
       <div className="auth-card">
-        <h2>Get started</h2>
-        <p className="subtitle">Create your account to begin</p>
+        <h2>Create account</h2>
+
         <form onSubmit={submit}>
           <label>
             Full name
-            <input value={name} onChange={e=>setName(e.target.value)} type="text" placeholder="John Doe" required />
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
           </label>
+
           <label>
             Email address
-            <input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="you@example.com" required />
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </label>
+
           <label>
             Password
-            <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="••••••••" required minLength={6} />
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
           </label>
+
+          <label>
+            Confirm password
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+            />
+          </label>
+
           {error && <div className="error">{error}</div>}
-          <button disabled={loading} type="submit">{loading? 'Creating account...':'Create Account'}</button>
+          {success && <div className="success">{success}</div>}
+
+          <button disabled={loading} type="submit">
+            {loading ? 'Creating...' : 'Sign Up'}
+          </button>
         </form>
+
         <div className="auth-footer">
-          Already have an account? <Link to="/">Sign in</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </div>
       </div>
     </div>

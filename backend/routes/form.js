@@ -20,6 +20,7 @@ router.get("/list-names", async (req, res) => {
         state: 1,
         totalEmployees: 1,
         currentDiscussion: 1,
+         createdAt: 1,  
       })
       .sort({ updatedAt: -1 })
       .lean();
@@ -34,6 +35,7 @@ router.get("/list-names", async (req, res) => {
       state: f.state || "—",
       totalEmployees: f.totalEmployees || "—",
       currentDiscussion: f.currentDiscussion || "—",
+        createdAt: f.createdAt,
     }));
 
     res.json({ success: true, data });

@@ -5,12 +5,30 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+/* ================= EMAIL ALLOWLIST ================= */
+const ALLOWED_EMAILS = [
+  "tarushi.chaudhary@shaurryatele.com",
+  "salil@shaurryatele.com",
+  "juhi@shaurryatele.com",
+  "akram@shaurryatele.com",
+];
+
 /* -------------------- SIGNUP -------------------- */
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
+
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    email = email.toLowerCase();
+
+    // 🔒 EMAIL RESTRICTION
+    if (!ALLOWED_EMAILS.includes(email)) {
+      return res.status(403).json({
+        message: 'Unauthorized email. Signup not allowed.',
+      });
     }
 
     const exists = await User.findOne({ email });
@@ -35,6 +53,7 @@ router.post('/signup', async (req, res) => {
         email: user.email
       }
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Signup failed' });
@@ -44,13 +63,30 @@ router.post('/signup', async (req, res) => {
 /* -------------------- LOGIN -------------------- */
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password required' });
+    }
+
+    email = email.toLowerCase();
+
+    // 🔒 EMAIL RESTRICTION
+    if (!ALLOWED_EMAILS.includes(email)) {
+      return res.status(403).json({
+        message: 'Unauthorized email. Login denied.',
+      });
+    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!match) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const token = jwt.sign(
       { id: user._id },
@@ -66,7 +102,9 @@ router.post('/login', async (req, res) => {
         email: user.email
       }
     });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Login failed' });
   }
 });
