@@ -77,11 +77,21 @@ useEffect(() => {
 
       const f = res.data?.data || {};
 
-      setFormData(prev => ({
-        ...prev,
-        personName: f.personName || "",
-        personPhone: f.personPhone || "",
-        personEmail: f.personEmail || "",
+setFormData(prev => ({
+  ...prev,
+
+  // ✅ WhatsApp / spoken number (SAME AS LEAD DASHBOARD)
+  personPhone: 
+    f.personPhone ||
+    f.phone_number ||
+    prev.personPhone,
+
+  // ✅ Caller number (FROM number)
+  callerPhone:
+    f.callerPhone ||
+    f.from_number ||
+    f.fromNumber ||
+    prev.callerPhone,
 
         businessEntityName: f.businessEntityName || "",
         state: f.state || "",
