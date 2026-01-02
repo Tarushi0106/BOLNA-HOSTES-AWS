@@ -49,6 +49,7 @@ const [submitted, setSubmitted] = useState(false);
     personName: "",
     personPhone: "",
     personEmail: "",
+      callerPhone: "",  
 
     businessEntityName: "",
     state: "",
@@ -117,13 +118,31 @@ useEffect(() => {
 
       const f = res.data?.data || {};
 
-      setFormData(prev => ({
-        ...prev,
-        bolnaCallId: f.bolnaCallId || prev.bolnaCallId, // ⭐ CRITICAL
-        ...f,
-        services: { ...prev.services, ...(f.services || {}) },
-        infrastructure: { ...prev.infrastructure, ...(f.infrastructure || {}) }
-      }));
+setFormData(prev => ({
+  ...prev,
+
+  // IDs
+  bolnaCallId: f.bolnaCallId || f.bolna_call_id || prev.bolnaCallId,
+
+  // WhatsApp / spoken number
+  personPhone: f.personPhone || f.phone_number || "",
+
+  // ⭐ CALLER NUMBER (FROM NUMBER)
+  callerPhone:
+    f.callerPhone ||
+    f.from_number ||
+    f.fromNumber ||
+    "",
+
+  personName: f.personName || f.name || "",
+  personEmail: f.personEmail || f.email || "",
+
+  // keep rest of form data
+  ...f,
+  services: { ...prev.services, ...(f.services || {}) },
+  infrastructure: { ...prev.infrastructure, ...(f.infrastructure || {}) }
+}));
+
 
     } catch (err) {
       console.error("❌ Prefill failed:", err);
@@ -270,7 +289,7 @@ const handleSubmit = async (e) => {
             </div>
 
          <div className="input-group">
-  <label>Phone Number:</label>
+  <label> Whatsapp Phone Number:</label>
   <input
     type="tel"
     name="personPhone"
@@ -279,6 +298,16 @@ const handleSubmit = async (e) => {
     className="readonly-field"
   />
 </div>
+<div className="input-group">
+    <label>Caller Phone Number:</label>
+    <input
+      type="tel"
+      name="callerPhone"
+      value={formData.callerPhone}
+      readOnly
+      className="readonly-field"
+    />
+  </div>
 
             <div className="input-group">
               <label>Email:</label>
