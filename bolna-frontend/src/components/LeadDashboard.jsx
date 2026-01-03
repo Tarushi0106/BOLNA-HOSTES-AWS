@@ -156,60 +156,43 @@ setFormData(prev => ({
   /* ================= SUBMIT ================= */
   const navigate = useNavigate();
 
-  // const handleChange = (e) => {
-    
-  //   setFormData({
-  //     ...formData,
-  //     [e.target.name]: e.target.value,
-  //   });
-  // };
 const handleSubmit = async (e) => {
   e.preventDefault();
-
-  if (!callId) return;                                    
-
-
-
-
-
-  // const submitId = callId === "new" ? "create" : callId;
-
-
-
-
-
-
-
+  if (!callId) return;
 
   setIsSubmitting(true);
 
   try {
-     const res = await fetch(`${API_BASE}/api/forms/${callId}`, {               
+    const res = await axios.post(
+      // `${API_BASE}/api/forms/${callId}`,  
+        `${API_BASE}/api/forms/submit/${callId}`, 
+      formData,
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
+    if (!res.data?.success) {
+      throw new Error(res.data?.error || "Submit failed");
+    }
 
-
-
-
-
-
-
-
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    if (!res.ok) throw new Error(await res.text());
-
-    // ✅ SUCCESS → REDIRECT
+    // ✅ SUCCESS
     navigate("/thank-you", { replace: true });
 
   } catch (err) {
-    alert(err.message || "Server error");
+    console.error("❌ Submit error:", err);
+    alert(
+      err.response?.data?.error ||
+      err.message ||
+      "Server error"
+    );
   } finally {
     setIsSubmitting(false);
   }
 };
+
 
 
 

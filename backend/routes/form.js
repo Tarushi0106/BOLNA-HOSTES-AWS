@@ -66,6 +66,81 @@ router.post("/submit", async (req, res) => {
   }
 });
 
+/* =======================================================
+   POST /api/forms/submit/:id
+   - Resolves Call ID or Form ID
+   - Saves/Updates LeadForm
+   - Pushes to Shaurrya Core API
+======================================================= */
+router.post("/submit/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid ID"
+      });
+    }
+
+    // 🔹 STEP 1: Resolve CALL
+    let call = await Calls.findById(id);
+
+    if (!call) {
+      const existingForm = await LeadForm.findById(id);
+      if (!existingForm || !existingForm.bolnaCallId) {
+        return res.status(404).json({
+          success: false,
+          error: "Call/Form not found"
+        });
+      }
+      call = await Calls.findById(existingForm.bolnaCallId);
+    }
+
+    if (!call) {
+      return res.status(404).json({
+        success: false,
+        error: "Linked Call not found"
+      });
+    }
+
+    // 🔹 STEP 2: Clean payload
+    const cleanData = {};
+    Object.keys(req.body).forEach(key => {
+      if (
+        req.body[key] !== undefined &&
+        req.body[key] !== null &&
+        req.body[key] !== ""
+      ) {
+        cleanData[key] = req.body[key];
+      }
+    });
+
+    // 🔹 STEP 3: UPSERT LeadForm
+    const form = await LeadForm.findOneAndUpdate(
+      { bolnaCallId: call._id },
+      { ...cleanData, bolnaCallId: call._id },
+      { new: true, upsert: true }
+    );
+
+    // 🔹 STEP 4: PUSH TO SHAURRYA CORE
+    const apiResponse = await pushOnlineLead(form);
+
+    return res.json({
+      success: true,
+      message: "Lead saved & pushed successfully",
+      data: form,
+      core_api: apiResponse
+    });
+
+  } catch (err) {
+    console.error("❌ Submit & Push Error:", err);
+    return res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
 
 
 
