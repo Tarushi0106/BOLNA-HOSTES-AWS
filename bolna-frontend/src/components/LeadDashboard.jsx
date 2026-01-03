@@ -165,51 +165,52 @@ setFormData(prev => ({
   // };
 const handleSubmit = async (e) => {
   e.preventDefault();
-
-  if (!callId) return;                                    
-
-
-
-
-
-  // const submitId = callId === "new" ? "create" : callId;
-
-
-
-
-
-
-
+  if (!callId) return;
 
   setIsSubmitting(true);
 
   try {
-     const res = await fetch(`${API_BASE}/api/forms/${callId}`, {               
-
-
-
-
-
-
-
-
-
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+    // ✅ 1. Existing backend call (KEEP AS-IS)
+    await axios.post(`${API_BASE}/api/forms/${callId}`, formData, {
+      headers: { "Content-Type": "application/json" }
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    // ✅ 2. NEW: Push to Shaurrya Core
+    const shaurryaPayload = {
+      company_name: formData.company_name,
+      contact_person: formData.contact_person,
+      contact_no: formData.contact_no,
+      company_email: formData.company_email,
+      area: formData.address,
+      state: formData.lead_state,
+      visit_date: formData.date,
+      product_pitched: formData.product_interested,
+      remark: formData.remark,
+      products: []
+    };
 
-    // ✅ SUCCESS → REDIRECT
+    await axios.post(
+      "https://core.shaurryatele.com/api/cp_online_leads_api.php",
+      shaurryaPayload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": "ad61394ea837cea3131cbcadc7973dbc60cd3657b29463d3bf6536cd11078e16"
+        }
+      }
+    );
+
+    // ✅ Redirect
     navigate("/thank-you", { replace: true });
 
   } catch (err) {
-    alert(err.message || "Server error");
+    console.error("❌ Submit failed:", err.response?.data || err.message);
+    alert("Submission failed. Please try again.");
   } finally {
     setIsSubmitting(false);
   }
 };
+
 
 
 
