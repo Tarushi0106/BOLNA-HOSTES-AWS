@@ -183,6 +183,7 @@ router.get("/prefill/:id", async (req, res) => {
         personPhone: call?.phone_number || "",
         personEmail: call?.email || "",
  callerPhone: call?.from_number || "", 
+ summary: call?.summary || "",   
         // FROM FORM
         ...(form || {})
       }

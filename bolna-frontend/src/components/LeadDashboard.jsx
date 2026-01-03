@@ -116,7 +116,9 @@ setFormData(prev => ({
   lead_state: f.lead_state || "",
   date: f.date || "",
   product_interested: f.product_interested || "",
-  remark: f.remark || ""
+remark: f.summary || f.remark || ""
+
+
 }));
 
 
