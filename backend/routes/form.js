@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const { pushOnlineLead } = require("../services/pushOnlineLead");
 
 const LeadForm = require("../models/LeadForm");
 const Calls = require("../models/Calls");
@@ -11,41 +12,59 @@ const Calls = require("../models/Calls");
 router.get("/list-names", async (req, res) => {
   try {
     const forms = await LeadForm.find({})
-      .select({
-        personName: 1,
-        personPhone: 1,
-        personEmail: 1,      
-  circleContactNo: 1,  
-        businessEntityName: 1,
-        state: 1,
-        totalEmployees: 1,
-        currentDiscussion: 1,
-         createdAt: 1,  
-      })
-      .sort({ updatedAt: -1 })
+      .sort({ createdAt: -1 })
       .lean();
 
-    const data = forms.map(f => ({
-      id: f._id,
-      displayName: f.personName || "—",
-      phone: f.personPhone || "—",
-        email: f.personEmail || "—",         
-  circleHead: f.circleContactNo || "—", 
-      businessEntityName: f.businessEntityName || "—",
-      state: f.state || "—",
-      totalEmployees: f.totalEmployees || "—",
-      currentDiscussion: f.currentDiscussion || "—",
-        createdAt: f.createdAt,
-    }));
+    res.json({
+      success: true,
+      data: forms.map(f => ({
+        id: f._id,
 
-    res.json({ success: true, data });
+        // PERSONAL
+        personName: f.personName || "—",
+        personPhone: f.personPhone || "—",
+        personEmail: f.personEmail || "—",
+
+        // LEAD DETAILS
+        company_name: f.company_name || "—",
+        contact_person: f.contact_person || "—",
+        contact_no: f.contact_no || "—",
+        company_email: f.company_email || "—",
+        lead_state: f.lead_state || "—",
+        date: f.date || "—",
+        remark: f.remark || "—",
+
+        createdAt: f.createdAt
+      }))
+    });
 
   } catch (err) {
-    console.error("❌ Lead list error:", err);
-    res.status(500).json({ success: false });
+    console.error("❌ list-names error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
+
+
+router.post("/submit", async (req, res) => {
+  try {
+    const lead = await LeadForm.create(req.body);
+
+    const apiResponse = await pushOnlineLead(lead);
+
+    return res.json({
+      success: true,
+      message: "Lead saved & pushed successfully",
+      api: apiResponse
+    });
+  } catch (err) {
+    console.error("❌ Lead submit error:", err);
+    return res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
 
 
 

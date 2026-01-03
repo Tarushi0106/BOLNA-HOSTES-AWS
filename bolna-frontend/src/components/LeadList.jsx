@@ -74,8 +74,9 @@ const handleLogout = () => {
     setFiltered(
       leads.filter(
         (l) =>
-          (l.displayName || "").toLowerCase().includes(s) ||
-          (l.phone || "").toLowerCase().includes(s) ||
+        (l.personName || l.displayName || "").toLowerCase().includes(s) ||
+(l.personPhone || l.phone || "").toLowerCase().includes(s)||
+
           (l.businessEntityName || "").toLowerCase().includes(s) ||
           (l.currentDiscussion || "").toLowerCase().includes(s) ||
           (l.state || "").toLowerCase().includes(s) ||
@@ -136,14 +137,14 @@ const handleLogout = () => {
           <table style={styles.table}>
 <thead>
   <tr>
-    <th style={styles.th}>NAME</th>
-    <th style={styles.th}>PHONE</th>
+    <th style={styles.th}>Contact Person name</th>
+    <th style={styles.th}>Phone</th>
     <th style={styles.th}>Email</th>
-    <th style={styles.th}>Circle Head</th>
-    <th style={styles.th}>BUSINESS ENTITY</th>
+    <th style={styles.th}>Company Name</th>
+    <th style={styles.th}>Date of Visit</th>
     <th style={styles.th}>STATE</th>
     <th style={styles.th}>DATE & TIME</th> {/* ✅ NEW */}
-    <th style={styles.th}>DISCUSSION</th>
+    <th style={styles.th}>Remark</th>
     <th style={styles.th}>VIEW</th>
   </tr>
 </thead>
@@ -154,23 +155,15 @@ const handleLogout = () => {
            <tbody>
   {filtered.map((lead) => (
 <tr key={lead.id} style={styles.row}>
-  <td style={styles.td}>{lead.displayName || "—"}</td>
-  <td style={styles.td}>{lead.phone || "—"}</td>
-  <td style={styles.td}>{lead.email || "—"}</td>
-  <td style={styles.td}>{lead.circleHead || "—"}</td>
-  <td style={styles.td}>{lead.businessEntityName || "—"}</td>
-  <td style={styles.td}>{lead.state || "—"}</td>
-
-  {/* ✅ DATE & TIME FROM DB */}
-  <td style={styles.td}>
-    {formatDateTime(lead.createdAt)}
-  </td>
-
-  <td style={styles.td}>
-    {(lead.currentDiscussion || "—").slice(0, 50)}...
-  </td>
-
-  <td style={styles.td}>
+  <td>{lead.contact_person}</td>
+  <td>{lead.contact_no}</td>
+  <td>{lead.company_email}</td>
+  <td>{lead.company_name}</td>
+  <td>{lead.date}</td>
+  <td>{lead.lead_state}</td>
+  <td>{formatDateTime(lead.createdAt)}</td>
+  <td>{lead.remark.slice(0, 50)}</td>
+  <td>
     <button
       onClick={() => navigate(`/lead-form/${lead.id}`)}
       style={styles.viewBtn}
@@ -179,6 +172,7 @@ const handleLogout = () => {
     </button>
   </td>
 </tr>
+
 
   ))}
 </tbody>

@@ -25,8 +25,6 @@ const callSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// If you need an index on call_id or whatsapp_message_id, define it here once.
-// For example, keep this and remove index: true on the field definition (if present):
 callSchema.index({ whatsapp_message_id: 1 }, { unique: false });
 callSchema.index({ call_id: 1 }, { unique: false });
 
