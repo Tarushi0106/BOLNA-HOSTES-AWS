@@ -13,6 +13,7 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import LeadDashboard from "./components/LeadDashboard";
+import Form from "./components/viewform"; // or correct path
 
 import LeadList from "./components/LeadList";
 
@@ -49,7 +50,15 @@ function AppContent() {
 <Route path="/lead-form/:callId" element={<LeadDashboard />} />
 
 
-     
+     <Route
+  path="/dashboard/leads/view/:callId"
+  element={
+    <ProtectedRoute>
+      <Form />
+    </ProtectedRoute>
+  }
+/>
+
 
       {/* PROTECTED ROUTES */}
       <Route

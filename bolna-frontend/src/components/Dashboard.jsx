@@ -196,145 +196,128 @@ const fetchCalls = async () => {
       </div>
     );
 
-  return (
-    <div className="dashboard-layout">
-      {/* ---------------- NAVBAR ---------------- */}
-      <nav className="navbar">
-        <div className="navbar-container">
-          <div className="navbar-brand">
-            <img src={shaurrya_logo} alt="logo" className="navbar-logo" />
-          </div>
+return (
+  <div className="app-layout">
+    {/* ================= LEFT SIDEBAR ================= */}
+<aside className="sidebar">
+  {/* FIXED HEADER */}
+  <div className="sidebar-header">
+    <img src={shaurrya_logo} className="sidebar-logo" />
+  </div>
 
-         
+  {/* SCROLLABLE BODY */}
+  <div className="sidebar-body">
+    {/* Overview */}
+    <div className="sidebar-section">
+      <p className="section-title">Overview</p>
 
-          <div className="navbar-user">
-            <div className="avatar">
-              {user?.email?.[0]?.toUpperCase() || "U"}
-            </div>
-            <span>{user?.email}</span>
-            <button className="logout-btn" onClick={handleLogout}>
-              🚪
-            </button>
-          </div>
-        </div>
-      </nav>
+      <div className="stat-line">
+        <span>Total Calls</span>
+        <strong>{calls.length}</strong>
+      </div>
 
-      {/* ---------------- CONTENT ---------------- */}
-      <main className="content">
-        <header className="page-header">
-          <div>
-            <h1>Dashboard</h1>
-            <p>Welcome to your calls management system</p>
-          </div>
+      <div className="stat-line">
+        <span>With Contact</span>
+        <strong>{calls.filter(c => c.phone_number !== "N/A").length}</strong>
+      </div>
 
-          <div className="header-actions">
-            <button className="btn-primary" onClick={fetchCalls}>
-              🔄 Refresh
-            </button>
-
-            <button
-              className="btn-primary"
-              onClick={() => navigate("/dashboard/leads")}
-            >
-              📄 Lead Dashboard
-            </button>
-
-            {/* <button
-              className="btn-message-logs"
-              onClick={() => navigate("/dashboard/messageLogs")}
-            >
-              🧾 Message Logs
-            </button> */}
-          </div>
-        </header>
-
-        {error && <div className="error-box">⚠️ {error}</div>}
-
-        {/* ---------------- KPI CARDS ---------------- */}
-        <section className="stats-grid">
-          <div className="stat-card">
-            <h4>Total Calls</h4>
-            <p>{calls.length}</p>
-          </div>
-
-          <div className="stat-card">
-            <h4>With Contact</h4>
-            <p>{calls.filter((c) => c.phone_number !== "N/A").length}</p>
-          </div>
-
-          {/* <div className="stat-card">
-            <h4>With Email</h4>
-            <p>{calls.filter((c) => c.email !== "N/A").length}</p>
-          </div> */}
-
-          <div className="stat-card">
-            <h4>Status</h4>
-            <p className="green">Active</p>
-          </div>
-        </section>
-
-        {/* ---------------- TABLE ---------------- */}
-        <section className="table-section">
-          <h2>Recent Calls ({calls.length})</h2>
-
-          <table className="calls-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Bolna Phone no.</th>
-                <th>User Phone no.</th>
-                {/* <th>Email</th>
-                <th>Best Time</th> */}
-                <th>Date & Time</th> {/* 🔥 NEW */}
-                <th>Status</th>
-                <th>Summary</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {calls.map((c, i) => (
-                <tr key={c._id || i}>
-                  <td>{i + 1}</td>
-                  <td>{c.name}</td>
-               <td>{c.bolna_from_number}</td>
-<td>{c.phone_number}</td>
-{/* 
-                  <td>{c.email}</td>
- <td>
-  {c.best_time_to_call
-    ? c.best_time_to_call.match(
-        /\b(1[0-2]|0?[1-9])(:[0-5][0-9])?\s?(AM|PM)\b/i
-      )?.[0] || "N/A"
-    : "N/A"}
-</td> */}
-
-
-
-                  {/* 🔥 MongoDB Date */}
-        <td>{formatDateTime(c.timestamp)}</td>
-
-
-                  <td>
-                    {c.whatsapp_status === "sent"
-                      ? "✅ Sent"
-                      : c.whatsapp_status === "failed"
-                      ? "❌ Failed"
-                      : "⏳ Pending"}
-                  </td>
-
-                 <td className="summary-cell">
-  {c.summary}
-</td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </main>
+      <div className="stat-line">
+        <span>Status</span>
+        <strong className="green">Active</strong>
+      </div>
     </div>
-  );
+
+    {/* Actions */}
+    <div className="sidebar-section">
+      <p className="section-title">Actions</p>
+
+      <button className="nav-btn" onClick={fetchCalls}>🔄 Refresh</button>
+      <button className="nav-btn" onClick={() => navigate("/dashboard/leads")}>
+        📄 Lead Dashboard
+      </button>
+    </div>
+  </div>
+
+  {/* FIXED FOOTER */}
+<div className="sidebar-footer">
+  <div className="account-row">
+    <div className="account-left">
+      <div className="avatar">
+        {user?.email?.[0]?.toUpperCase() || "U"}
+      </div>
+      <span className="account-email">{user?.email}</span>
+    </div>
+
+    <button
+      className="logout-btn"
+      onClick={handleLogout}
+      title="Logout"
+    >
+      ⎋
+    </button>
+  </div>
+</div>
+
+
+</aside>
+
+
+
+    {/* ================= MAIN CONTENT ================= */}
+    <main className="main-content">
+      <header className="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Recent call activity</p>
+        </div>
+      </header>
+
+      {error && <div className="error-box">⚠️ {error}</div>}
+
+      <section className="table-section">
+        <h2>Recent Calls ({calls.length})</h2>
+
+        <table className="calls-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Bolna Phone</th>
+              <th>User Phone</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {calls.map((c, i) => (
+              <tr key={c._id || i}>
+                <td>{i + 1}</td>
+                <td>{c.name}</td>
+                <td>{c.bolna_from_number}</td>
+                <td>{c.phone_number}</td>
+                <td>{formatDateTime(c.timestamp)}</td>
+                <td>
+                  {c.whatsapp_status === "sent"
+                    ? "✅ Sent"
+                    : c.whatsapp_status === "failed"
+                    ? "❌ Failed"
+                    : "⏳ Pending"}
+                </td>
+                <td className="summary-cell">{c.summary}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+);
+
 };
 
 export default Dashboard;
+ 
+
+

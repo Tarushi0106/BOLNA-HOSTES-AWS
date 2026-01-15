@@ -92,97 +92,130 @@ const handleLogout = () => {
   const withDiscussion = leads.filter(
     (l) => l.currentDiscussion && l.currentDiscussion !== "—"
   ).length;
-  return (
-    <div style={styles.page}>
-      
-      {/* NAVBAR */}
-   <div style={styles.navbar}>
-  <img src={Logo} alt="logo" style={styles.logo} />
+return (
+  <div className="app-layout">
+    {/* ========== SIDEBAR (SAME AS DASHBOARD) ========== */}
+    <aside className="sidebar">
+      {/* HEADER */}
+      <div className="sidebar-header">
+        <img src={Logo} className="sidebar-logo" />
+      </div>
 
-  {/* RIGHT SIDE USER + LOGOUT */}
-  <div style={styles.navRight}>
-    <div style={styles.avatar}>
-      {user?.email?.[0]?.toUpperCase() || "U"}
-    </div>
-    <span style={styles.userEmail}>{user?.email}</span>
-    <button onClick={handleLogout} style={styles.logoutBtn}>
-      🚪
-    </button>
+      {/* BODY */}
+      <div className="sidebar-body">
+        <div className="sidebar-section">
+          <p className="section-title">Navigation</p>
+
+          {/* DASHBOARD BUTTON */}
+          <button
+            className="nav-btn"
+            onClick={() => navigate("/dashboard")}
+          >
+            📊 Dashboard
+          </button>
+
+          {/* LEADS (ACTIVE) */}
+          <button className="nav-btn active">
+            📄 Lead Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="sidebar-footer">
+        <div className="account-row">
+          <div className="account-left">
+            <div className="avatar">
+              {user?.email?.[0]?.toUpperCase() || "U"}
+            </div>
+            <span className="account-email">{user?.email}</span>
+          </div>
+
+          <button className="logout-btn" onClick={handleLogout} title="Logout">
+            ⎋
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    {/* ========== MAIN CONTENT ========== */}
+    <main className="main-content">
+<div className="page-header">
+  <div className="title-block">
+    <span className="eyebrow">LEAD MANAGEMENT</span>
+    <h1>Enterprise Leads Overview</h1>
+    <p>Centralized view of all captured enterprise enquiries</p>
   </div>
 </div>
 
 
-      <div style={styles.container}>
-        <h1 style={styles.heading}>Leads Dashboard</h1>
-
-        {/* KPI CARDS */}
-        <div style={styles.kpiWrapper}>
-          <KPI title="Total Leads" value={totalLeads} />
-          <KPI title="Business Entity" value={withBusiness} />
-          <KPI title="With Discussion" value={withDiscussion} />
-          <KPI title="Status" value="Active" />
-        </div>
-
-        {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="Search by name, phone, business entity..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={styles.searchBox}
-        />
-
-        {/* TABLE */}
-        <div style={styles.tableBox}>
-          <table style={styles.table}>
-<thead>
-  <tr>
-    <th style={styles.th}>Contact Person name</th>
-    <th style={styles.th}>Phone</th>
-    <th style={styles.th}>Email</th>
-    <th style={styles.th}>Company Name</th>
-    <th style={styles.th}>Date of Visit</th>
-    <th style={styles.th}>STATE</th>
-    <th style={styles.th}>DATE & TIME</th> {/* ✅ NEW */}
-    <th style={styles.th}>Remark</th>
-    <th style={styles.th}>VIEW</th>
-  </tr>
-</thead>
 
 
 
+      {/* KPI CARDS */}
+     <div className="kpi-grid">
 
-           <tbody>
-  {filtered.map((lead) => (
-<tr key={lead.id} style={styles.row}>
-  <td>{lead.contact_person}</td>
-  <td>{lead.contact_no}</td>
-  <td>{lead.company_email}</td>
-  <td>{lead.company_name}</td>
-  <td>{lead.date}</td>
-  <td>{lead.lead_state}</td>
-  <td>{formatDateTime(lead.createdAt)}</td>
-  <td>{lead.remark.slice(0, 50)}</td>
-  <td>
-    <button
-      onClick={() => navigate(`/lead-form/${lead.id}`)}
-      style={styles.viewBtn}
-    >
-      View
-    </button>
-  </td>
-</tr>
-
-
-  ))}
-</tbody>
-
-          </table>
-        </div>
-
+        <KPI title="Total Leads" value={totalLeads} />
+        <KPI title="Business Entity" value={withBusiness} />
+        <KPI title="With Discussion" value={withDiscussion} />
+        <KPI title="Status" value="Active" />
       </div>
-    </div>
-  );
+
+      {/* SEARCH */}
+      <input
+        type="text"
+        placeholder="Search by name, phone, business entity..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={styles.searchBox}
+      />
+
+      {/* TABLE */}
+      <div style={styles.tableBox}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Contact Person name</th>
+              <th style={styles.th}>Phone</th>
+              <th style={styles.th}>Email</th>
+              <th style={styles.th}>Company Name</th>
+              <th style={styles.th}>Date of Visit</th>
+              <th style={styles.th}>STATE</th>
+              <th style={styles.th}>DATE & TIME</th>
+              <th style={styles.th}>Remark</th>
+              <th style={styles.th}>VIEW</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filtered.map((lead) => (
+              <tr key={lead.id} style={styles.row}>
+                <td>{lead.contact_person}</td>
+                <td>{lead.contact_no}</td>
+                <td>{lead.company_email}</td>
+                <td>{lead.company_name}</td>
+                <td>{lead.date}</td>
+                <td>{lead.lead_state}</td>
+                <td>{formatDateTime(lead.createdAt)}</td>
+                <td>{lead.remark?.slice(0, 50)}</td>
+                <td>
+                  <button
+                    onClick={() => navigate(`/dashboard/leads/view/${lead.id}`)
+}
+                    style={styles.viewBtn}
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+);
+
 }
 
 
@@ -190,15 +223,19 @@ const handleLogout = () => {
 
 function KPI({ title, value }) {
   return (
-    <div style={kpiStyles.card}>
-      <div style={kpiStyles.leftBar}></div>
-      <div style={kpiStyles.content}>
-        <div style={kpiStyles.title}>{title}</div>
-        <div style={kpiStyles.value}>{value}</div>
+    <div className="metric-card">
+      <div className="metric-left">
+        <span className="metric-label">{title}</span>
+        <span className={`metric-value ${value === "Active" ? "metric-active" : ""}`}>
+          {value}
+        </span>
       </div>
+      <div className="metric-bar" />
     </div>
   );
 }
+
+
 
 const kpiStyles = {
   card: {
