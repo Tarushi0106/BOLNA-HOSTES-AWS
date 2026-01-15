@@ -7,7 +7,7 @@ router.get('/', async (req, res) => {
   try {
     const calls = await Calls.find({})
       .sort({ createdAt: -1 })
-      .limit(100);
+   
 
     res.json(calls);
   } catch (err) {

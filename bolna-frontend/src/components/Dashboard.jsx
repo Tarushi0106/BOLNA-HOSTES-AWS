@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import shaurrya_logo from "../assets/shaurrya_logo.png";
 
+
 /* ---------------- API BASE ---------------- */
 // const API_BASE =
 //   window.location.hostname === "localhost" ||
@@ -50,11 +51,16 @@ const formatDateTime = (iso) => {
 };
 
 
+const PAGE_SIZE = 50;
+
 const Dashboard = () => {
   const [calls, setCalls] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  
 
   const navigate = useNavigate();
 
@@ -73,33 +79,35 @@ useEffect(() => {
 }, []);
 
   /* ---------------- NORMALIZE DATA ---------------- */
-const normalizeCalls = (data) => {
-  const arr = Array.isArray(data) ? data : [];
-  return arr.map((c) => ({
-    _id: c._id,
-    name: c.name || "N/A",
+// const normalizeCalls = (data) => {
+//   const arr = Array.isArray(data) ? data : [];
+//   return arr.map((c) => ({
+//     _id: c._id,
+//     name: c.name || "N/A",
 
-    // ✅ USER FILLED NUMBER (lead form)
-    phone_number: c.phone_number || "N/A",
+//     // ✅ USER FILLED NUMBER (lead form)
+//     phone_number: c.phone_number || "N/A",
 
-    // ✅ BOLNA FROM NUMBER
-    bolna_from_number:
-      c.fromNumber ||
-      c.user_number ||   // fallback if backend sends old field
-      "N/A",
+//     // ✅ BOLNA FROM NUMBER
+//     bolna_from_number:
+//       c.fromNumber ||
+//       c.user_number ||   // fallback if backend sends old field
+//       "N/A",
 
-    // email: c.email || "N/A",
-    // best_time_to_call: c.best_time_to_call || "N/A",
-    whatsapp_status: c.whatsapp_status || "pending",
-    summary: c.summary || "—",
-  timestamp: b.createdAt,
+//     // email: c.email || "N/A",
+//     // best_time_to_call: c.best_time_to_call || "N/A",
+//     whatsapp_status: c.whatsapp_status || "pending",
+//     summary: c.summary || "—",
+//   timestamp: b.createdAt,
 
-  }));
-};
+//   }));
+// };
 
 
   /* ---------------- FETCH CALLS ---------------- */
 const fetchCalls = async () => {
+
+
   try {
     setLoading(true);
     setError(null);
@@ -161,14 +169,17 @@ const fetchCalls = async () => {
       }));
 
     // 3️⃣ Combine both
- const finalData = [...mergedFromCalls, ...bolnaOnlyFailed]
-  .filter(
-    (c) => c.whatsapp_status === "sent" || c.whatsapp_status === "failed"
-  )
-.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+const finalData = [...mergedFromCalls, ...bolnaOnlyFailed]
+  .map(c => ({
+    ...c,
+    timestamp: c.timestamp || c.createdAt || new Date(0)
+  }))
+  .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
 
     setCalls(finalData);
+    setCurrentPage(1);
+
   } catch (err) {
     console.error("❌ Failed to load calls:", err);
     setError("Failed to load calls");
@@ -176,6 +187,12 @@ const fetchCalls = async () => {
     setLoading(false);
   }
 };
+const totalPages = Math.ceil(calls.length / PAGE_SIZE);
+
+const pagedCalls = calls.slice(
+  (currentPage - 1) * PAGE_SIZE,
+  currentPage * PAGE_SIZE
+);
 
 
 
@@ -291,9 +308,11 @@ return (
           </thead>
 
           <tbody>
-            {calls.map((c, i) => (
+           {pagedCalls.map((c, i) => (
+
               <tr key={c._id || i}>
-                <td>{i + 1}</td>
+             <td>{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
+
                 <td>{c.name}</td>
                 <td>{c.bolna_from_number}</td>
                 <td>{c.phone_number}</td>
@@ -310,10 +329,35 @@ return (
             ))}
           </tbody>
         </table>
+
+<div className="pagination">
+  <button
+    className="nav-btn"
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage(p => p - 1)}
+  >
+    ◀ Prev
+  </button>
+
+  <span className="pagination-text">
+    Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+  </span>
+
+  <button
+    className="nav-btn"
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage(p => p + 1)}
+  >
+    Next ▶
+  </button>
+</div>
+
       </section>
     </main>
   </div>
 );
+
+
 
 };
 
